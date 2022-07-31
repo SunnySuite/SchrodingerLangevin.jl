@@ -1,6 +1,6 @@
 module SchrodingerLangevin
 
-export Vec3, Mat3, spin_operators, System, set_state_from_dipole!, energy, heun_langevin_step!
+export Vec3, Mat3, spin_operators, System, set_state_from_dipole!, energy, heun_langevin_step!, rand!
 
 using LinearAlgebra
 using StaticArrays
@@ -89,9 +89,9 @@ struct System{N, N2}
                 @assert norm(Λ[i] - Λ'[i]) < 1e-12
             end
             # Remove trace
-            # for i = 1:L
-            #     Λ[i] -= I*tr(Λ[i])/N
-            # end
+            for i = 1:L
+                Λ[i] -= I*tr(Λ[i])/N
+            end
         end
 
         Z₀ = SVector{N,ComplexF64}((i==1 ? 1 : 0) for i=1:N)
@@ -138,7 +138,6 @@ function set_expected_spins!(s, sys, Z)
     @. s = sys.spin_rescaling * spin_bilinear(S, Z)
 end
 
-# Make this model dependent
 function local_energy_and_gradient(sys::System{N}, s, i) where {N}
     E = 0.
     ∇E = zero(Vec3{Float64})
@@ -189,7 +188,6 @@ function energy(sys::System{N}) where N
 end
 
 
-# Add noise here
 function integrate_rhs_aux!(rhs, sys, Δt, kT, ∇E, Z)
     (; ξ, α) = sys 
     apply_local_hamiltonians!(rhs, sys, ∇E, Z)
@@ -220,19 +218,27 @@ function heun_langevin_step!(sys::System, Δt, kT)
     set_expected_spins!(sys.s, sys, sys.Z)
 end
 
+function Random.rand!(sys::System)
+    randn!(sys.rng, sys.Z)
+    @. sys.Z /= norm(sys.Z)
+    set_expected_spins!(sys.s, sys, sys.Z)
+    nothing
+end
+
+
+
 ## Code to generate the four figures appearing in 
 
-# using Plots
-# using ColorSchemes
-# using LaTeXStrings
-# import Measures: mm
-# # pyplot()
-# export fig1, fig2, fig3, fig4
-# 
-# include("fig1.jl")
-# include("fig2.jl")
-# include("fig3.jl")
-# include("fig4.jl")
+using Plots
+using ColorSchemes
+using LaTeXStrings
+using Interpolations
+import Measures: mm
+import Statistics: mean, std
+# pyplot()
+export fig1, fig2, fig3, fig4
+
+include("fig1.jl")
 
 
 end # module
