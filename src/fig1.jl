@@ -23,10 +23,6 @@ function entangled_pair(; J=1.0, rng)
     System(; N=4, L=1, J=0.0, Λ=[Λ], rng=nothing)
 end
 
-function energy_classical(β, J=1.0)
-    (1/β) - (J/4)*coth(β*J/4)
-end
-
 function generate_statistics(Δt, num_samples, kTs;
     sys_func, 
     bin_func,
@@ -53,6 +49,9 @@ function generate_statistics(Δt, num_samples, kTs;
     return (; μs, σs)
 end
 
+function energy_classical(β, J=1.0)
+    (1/β) - (J/4)*coth(β*J/4)
+end
 
 function energy_entangled(β, J=1.0)
     if β >= 1000 || isinf(β)
@@ -69,6 +68,8 @@ function energy_quantum(β, J=1.0)
     end
     -3J*(exp(β*J) - 1) / (4*(exp(β*J) + 3))
 end
+
+
 function fig1()
     #= Set sampling bin sizes =#
     kTs = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
