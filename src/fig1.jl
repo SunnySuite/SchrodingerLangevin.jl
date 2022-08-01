@@ -1,3 +1,12 @@
+# using Plots
+# using ColorSchemes
+# using LaTeXStrings
+# using Interpolations
+# import Measures: mm
+# import Statistics: mean, std
+# using JLD2
+
+
 function dimer_exchange(J)
     v = [0.0 1.0 -1.0 0.0] / √2
     return (J/4)*I(4) - J*v'*v
@@ -14,7 +23,7 @@ function energy_trajectory!(sys, dur, Δt, kT)
     return Es
 end
 
-function classical_system(; J=1.0, rng=nothing)
+function classical_pair(; J=1.0, rng=nothing)
     System(; N=2, L=2, J, rng)
 end
 
@@ -71,107 +80,184 @@ end
 
 
 function fig1()
-    #= Set sampling bin sizes =#
-    kTs = [0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
-    bin_dur = [40.0, 25.0, 10.0, 6.0, 5.0, 5.0, 5.0]
-    itp = LinearInterpolation(kTs, bin_dur)
-    bin_func = kT -> kT < 0.1 ? 1.0 : itp(kT)
+    #= Set sampling bin widths (decorrelation times) for different models and temperatures =#
+    # Entangled AFM (J=1.0)
+    kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]
+
+    bin_durs = [40.0, 35.0, 20.0, 10.0, 9.0, 7.5,  5.0, 5.0,  5.0, 4.0, 3.0, 3.0,  3.0]
+    itp = LinearInterpolation(kTs, bin_durs)
+    bin_en_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+
+    # Entangled FM (J=-1.0)
+    bin_durs = [40.0, 25.0, 15.0, 10.0, 7.5, 5.0,  5.0, 5.0,  4.0, 3.0, 3.0, 3.0,  3.0]
+    itp = LinearInterpolation(kTs, bin_durs)
+    bin_en_fm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+
+    # Classical AFM (J=1.0)
+    bin_durs = [40.0, 25.0, 12.0, 8.5,  8.0, 7.5,  5.0, 4.0,  4.0, 3.0, 3.0, 3.0,  2.5]
+    itp = LinearInterpolation(kTs, bin_durs)
+    bin_cl_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+
+    # Classical FM (J=-1.0)
+    bin_durs = [40.0, 30.0, 15.0, 12.0, 10.0, 7.5,  5.0, 4.9,  4.0, 3.5, 2.75, 2.5,  2.45]
+    itp = LinearInterpolation(kTs, bin_durs)
+    bin_cl_fm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+
 
     #= Trial parameters =#
+    kT_max = 1.5
     Δt = 0.1
-    num_samples = 1000
-    kTs = 0.0:0.1:2.0
+    num_samples = 10000
+    kTs = 0.0:0.1:kT_max
+
 
     #= Generate data for classical and entangled unit models =#
     rng = MersenneTwister(111)
 
+    println("Collecting statistics to pair of SU(2) coherent spins (J=1)")
     sys_func = () -> entangled_pair(; J=1.0, rng) 
-    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
+    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func=bin_en_afm)
     μs_afm_en, σs_afm_en = μs, σs
 
+    println("Collecting statistics for single SU(4) engtangled pair (J=1)") 
     sys_func = () -> entangled_pair(; J=-1.0, rng) 
-    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
+    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func=bin_en_fm)
     μs_fm_en, σs_fm_en = μs, σs
 
-    sys_func = () -> classical_system(; J=1.0, rng) 
-    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
+    println("Collecting statistics to pair of SU(2) coherent spins (J=-1)")
+    sys_func = () -> classical_pair(; J=1.0, rng) 
+    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func=bin_cl_afm)
     μs_afm_cl, σs_afm_cl = μs, σs
 
-    sys_func = () -> classical_system(; J=-1.0, rng) 
-    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
+    println("Collecting statistics for single SU(4) engtangled pair (J=-1)") 
+    sys_func = () -> classical_pair(; J=-1.0, rng) 
+    (; μs, σs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func=bin_cl_fm)
     μs_fm_cl, σs_fm_cl = μs, σs
 
 
-    #= Plot results =#
-    kTs_ref = 0.000:0.001:2.0
+    #= Calculate analytical energies =#
+    kTs_ref = 0.000:0.001:kT_max
 
-    # FM
     J = -1.0
     E_fm_cl = map(kT -> energy_classical(1/kT, J), kTs_ref)
     E_fm_qu = map(kT -> energy_quantum(1/kT, J), kTs_ref)
     E_fm_en = map(kT -> energy_entangled(1/kT, J), kTs_ref) 
-    p1 = plot(kTs_ref, E_fm_cl;
-        label="LL",
-        linestyle=:dash,
-        color = :black,
-        ylabel = "E",
-    )
-    plot!(kTs_ref, E_fm_en;
-        label="Entangled Unit",
-        linestyle=:dashdot,
-        color = :black,
-    )
-    plot!(kTs_ref, E_fm_qu;
-        label="Quantum",
-        linestyle=:dashdotdot,
-        color = :black,
-    )
-    scatter!(kTs, μs_fm_cl;
-        label = "LL",
-        markershape = :circle,
-        color = 1,
-    )
-    scatter!(kTs, μs_fm_en;
-        markershape = :diamond,
-        label = "Entangled Unit",
-        color = 2,
-    )
 
-    ## AFM
     J = 1.0
     E_afm_cl = map(kT -> energy_classical(1/kT, J), kTs_ref)
     E_afm_qu = map(kT -> energy_quantum(1/kT, J), kTs_ref)
     E_afm_en = map(kT -> energy_entangled(1/kT, J), kTs_ref) 
-    p2 = plot(kTs_ref, E_afm_cl;
-        label="LL",
+
+
+    #= Plot results =#
+    params = (;
+        xlabelfontsize = 16,
+        ylabelfontsize = 14,
+        legendfontsize = 14,
+        xtickfontsize = 12,
+        ytickfontsize = 12,
+        palette=:seaborn_colorblind,
+    )
+    marker1 = (;
+        color = 1,
+        markershape = :cross,
+        markersize = 5.0,
+        markerstrokewidth = 2.0,
+    )
+    marker2 = (;
+        color = 2,
+        markershape = :xcross,
+        markersize = 4.0,
+        markerstrokewidth = 2.0,
+    )
+    line_cl = (;
+        linewidth=1.5,
         linestyle = :dash,
         color = :black,
+    )
+    line_en = (;
+        linestyle=:dot,
+        linewidth=2.0,
+        color = :black,
+    )
+    line_qu = (;
+        linewidth=1.5,
+        color = :black,
+    )
+    yticks_fm  = 0.0:-0.05:-0.25
+    yticks_afm = 0.0:-0.125:-0.75
+    xticks = 0.0:0.5:kTs[end]
+
+    p1 = plot(; 
+        yticks = (yticks_fm, [L"%$y" for y ∈ yticks_fm]),
+        ylims = (-0.25*1.05, 0.0),
+        xticks = (xticks, [L"%$x" for x ∈ xticks]),
+        params...
+    )
+    plot!(kTs_ref, E_fm_cl;
+        label="SU(2)",
+        ylabel = L"E",
         legend=false,
-        xlabel = "kT",
-        ylabel = "E",
+        line_cl...
+    )
+    plot!(kTs_ref, E_fm_en;
+        label="SU(4)",
+        color = :black,
+        line_en...
+    )
+    plot!(kTs_ref, E_fm_qu;
+        label="Quantum",
+        color = :black,
+        line_qu...
+    )
+    scatter!(kTs, μs_fm_cl;
+        label = "LL",
+        marker1...
+    )
+    scatter!(kTs, μs_fm_en;
+        label = "Entangled Unit",
+        marker2...
+    )
+
+    ## AFM
+    p2 = plot(;
+        yticks = (yticks_afm, [L"%$y" for y ∈ yticks_afm]),
+        ylims = (-0.75*1.05, 0.0),
+        xticks = (xticks, [L"%$x" for x ∈ xticks]),
+        legend=:bottomright,
+        params...
+    )
+    plot!(kTs_ref, E_afm_cl;
+        label="SU(2)",
+        color = :black,
+        xlabel = L"k_bT",
+        ylabel = L"E",
+        line_cl...
     )
     plot!(kTs_ref, E_afm_en; 
-        label="Entangled Unit",
-        linestyle=:dashdot,
-        color = :black,
+        label="SU(4)",
+        line_en...
     )
     plot!(kTs_ref, E_afm_qu;
         label="Quantum",
-        linestyle=:dashdotdot,
+        linewidth=1.0,
         color = :black,
+        line_qu...
     )
     scatter!(kTs, μs_afm_cl;
-        color = 1,
-        markershape = :circle,
+        label="SU(2) numerical",
+        marker1...
     )
     scatter!(kTs, μs_afm_en;
-        markershape = :diamond,
-        color = 2,
+        label="SU(4) numerical",
+        marker2...
     )
 
     layout = @layout [a; b]
-    return plot(p1, p2;
+    p = plot(p1, p2;
         layout,
-        title = ["FM" "AFM"],
+        title = [L"J=-1.0" L"J=1.0"],
     )
+    plot!(;size=(600,600))
+    return p
 end

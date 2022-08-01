@@ -236,9 +236,8 @@ using Interpolations
 import Measures: mm
 import Statistics: mean, std
 # pyplot()
-export fig1, fig2, fig3, fig4
+export fig1
 
 include("fig1.jl")
-
 
 end # module
