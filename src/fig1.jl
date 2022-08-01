@@ -18,9 +18,9 @@ function classical_system(; J=1.0, rng=nothing)
     System(; N=2, L=2, J, rng)
 end
 
-function entangled_pair(; J=1.0, rng)
+function entangled_pair(; J=1.0, rng=nothing)
     Λ = dimer_exchange(J)
-    System(; N=4, L=1, J=0.0, Λ=[Λ], rng=nothing)
+    System(; N=4, L=1, J=0.0, Λ=[Λ], rng)
 end
 
 function generate_statistics(Δt, num_samples, kTs;
