@@ -241,12 +241,11 @@ using LaTeXStrings
 using Interpolations
 import Measures: mm
 import Statistics: mean, std
-# pyplot()
-export fig1
+export fig1, fig2
 
 include("models_and_utils.jl")
-# include("fig1.jl")
-# include("fig2.jl")
+include("fig1.jl")
+include("fig2.jl")
 
 end # module
 

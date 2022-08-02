@@ -1,59 +1,43 @@
-includet("SchrodingerLangevin.jl")
-includet("models_and_utils.jl")
-using .SchrodingerLangevin
-using Plots
-using ColorSchemes
-using LaTeXStrings
-using Interpolations
-using LinearAlgebra
-using Random
-import Measures: mm
-import Statistics: mean, std
-
+## Just for development. Delete these comments before publishing.
+# includet("SchrodingerLangevin.jl")
+# includet("models_and_utils.jl")
+# using .SchrodingerLangevin
+# using Plots
+# using ColorSchemes
+# using LaTeXStrings
+# using Interpolations
+# using Random
+# import Measures: mm
+# import Statistics: mean, std
 
 function fig1()
     #= Generate data for classical and entangled unit models =#
-
     # Trial parameters
-    kT_max = 1.5
-    kTs = 0.0:0.1:kT_max
+    kT_max = 2.0
+    kTs = 0.0:0.15:kT_max
     Δt = 0.1
-    num_samples = 10000
-    bin_func = kt -> 10.0 # Sampling bin width. Uniform value sufficient for estimating mean.
+    num_samples = 10_000
+    bin_func = kT -> 5.0 # Sampling bin width. Uniform value sufficient for estimating mean.
     rng = MersenneTwister(111)
 
-    # Run simulations
-    println("\nCollecting statistics to pair of SU(2) coherent spins (J=1)")
-    sys_func = () -> entangled_pair(; J=1.0, rng) 
+    D = -1.0
+    println("\nCollecting statistics for SU(2) spin with traditional anisotropy.")
+    sys_func = () -> dipole_anisotropy(; D, rng) 
     (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_afm_en = μs
+    μs_cl = μs
 
-    println("\nCollecting statistics for single SU(4) engtangled pair (J=1)") 
-    sys_func = () -> entangled_pair(; J=-1.0, rng) 
+    println("\nCollecting statistics for SU(3) spin with SU(3) anisotropy.")
+    sys_func = () -> su3_anisotropy(; D, rng) 
     (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_fm_en = μs
+    μs_su3 = μs
 
-    println("\nCollecting statistics to pair of SU(2) coherent spins (J=-1)")
-    sys_func = () -> classical_pair(; J=1.0, rng) 
-    (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_afm_cl = μs
-
-    println("\nCollecting statistics for single SU(4) engtangled pair (J=-1)") 
-    sys_func = () -> classical_pair(; J=-1.0, rng) 
-    (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_fm_cl = μs
 
 
     #= Calculate analytical energies =#
     kTs_ref = 0.000:0.001:kT_max
-    J = -1.0
-    E_fm_cl = map(kT -> energy_pair_dipole(1/kT, J), kTs_ref)
-    E_fm_en = map(kT -> energy_pair_entangled(1/kT, J), kTs_ref) 
-    E_fm_qu = map(kT -> energy_pair_quantum(1/kT, J), kTs_ref)
-    J = 1.0
-    E_afm_cl = map(kT -> energy_pair_dipole(1/kT, J), kTs_ref)
-    E_afm_en = map(kT -> energy_pair_entangled(1/kT, J), kTs_ref) 
-    E_afm_qu = map(kT -> energy_pair_quantum(1/kT, J), kTs_ref)
+    E_cl = map(kT -> energy_aniso_dipole(1/kT, D), kTs_ref)
+    E_su3 = map(kT -> energy_aniso_su3(1/kT, D), kTs_ref) 
+    E_qu = map(kT -> energy_aniso_quantum(1/kT, D), kTs_ref)
 
 
     #= Plot results =#
@@ -66,27 +50,27 @@ function fig1()
         palette=:seaborn_colorblind,
     )
     marker1 = ( ;
-        label = "SU(2) CS Numerical",
+        label = "Dipole aniso numerical",
         color = 1,
         markershape = :cross,
-        markersize = 7.0,
-        markerstrokewidth = 2.5,
+        markersize = 6.5,
+        markerstrokewidth = 6.5,
     )
     marker2 = (;
-        label = "SU(4) CS Numerical",
+        label = "SU(3) aniso numerical",
         color = 2,
         markershape = :xcross,
         markersize = 5.0,
-        markerstrokewidth = 2.5,
+        markerstrokewidth = 6.5,
     )
     line_cl = (;
-        label = "SU(2) CS",
+        label = "Dipole aniso",
         linewidth = 1.5,
         linestyle = :dash,
         color = :black,
     )
-    line_en = (;
-        label = "SU(4) CS",
+    line_su3 = (;
+        label = "SU(3) aniso",
         linestyle = :dot,
         linewidth = 2.0,
         color = :black,
@@ -96,42 +80,30 @@ function fig1()
         linewidth=1.5,
         color = :black,
     )
-    yticks_fm  = 0.0:-0.05:-0.25
-    yticks_afm = 0.0:-0.125:-0.75
-    xticks = 0.0:0.5:kTs[end]
+    yticks = -0.4:-0.1:-1.20
+    xticks = 0.0:0.5:kT_max
 
     # FM (J < 0)
-    p1 = plot(; 
-        yticks = (yticks_fm, [L"%$y" for y ∈ yticks_fm]),
-        ylims = (-0.25*1.05, 0.0),
+    p = plot(; 
+        yticks = (yticks, [L"%$y" for y ∈ yticks]),
         xticks = (xticks, [L"%$x" for x ∈ xticks]),
-        legend=false,
-        params...
-    )
-    plot!(kTs_ref, E_fm_cl; ylabel = L"E", line_cl...)
-    plot!(kTs_ref, E_fm_en; line_en...)
-    plot!(kTs_ref, E_fm_qu; line_qu...)
-    scatter!(kTs, μs_fm_cl; marker1...)
-    scatter!(kTs, μs_fm_en; marker2...)
-
-    # AFM (J > 0)
-    p2 = plot(;
-        yticks = (yticks_afm, [L"%$y" for y ∈ yticks_afm]),
-        ylims = (-0.75*1.05, 0.0),
-        xticks = (xticks, [L"%$x" for x ∈ xticks]),
+        ylims = (-1.30, -0.35),
+        xlims = (-0.05, 2.05),
+        xlabel = L"E",
+        ylabel = L"k_bT",
         legend=:bottomright,
+        size=(600,350),
+        left_margin=3mm,
+        right_margin=3mm,
         params...
     )
-    plot!(kTs_ref, E_afm_cl; xlabel = L"k_bT", ylabel = L"E", line_cl...)
-    plot!(kTs_ref, E_afm_en; line_en...)
-    plot!(kTs_ref, E_afm_qu; line_qu...)
-    scatter!(kTs, μs_afm_cl; marker1...)
-    scatter!(kTs, μs_afm_en; marker2...)
+    plot!(kTs_ref, E_cl; line_cl...)
+    plot!(kTs_ref, E_su3; line_su3...)
+    plot!(kTs_ref, E_qu; line_qu...)
+    scatter!(kTs, μs_cl; marker1...)
+    scatter!(kTs, μs_su3; marker2...)
 
-    layout = @layout [a; b]
-    return plot(p1, p2;
-        layout,
-        size=(600,600),
-        title = [L"J=-1.0" L"J=1.0"],
-    )
+    savefig("fig1.pdf")
+
+    return p
 end
