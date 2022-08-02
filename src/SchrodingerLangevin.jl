@@ -52,6 +52,7 @@ struct System{N, N2}
     L::Int # Chain length
     J::Float64 # Heisenberg coupling strength
     B::Vec3{Float64} # External field
+    D::Float64 # Easy-axis strength, in the LL formalism
     Λ::Vector{SMatrix{N, N, ComplexF64, N2}} # Anisotropy matrices in GSD formalism
 
     rng::AbstractRNG
@@ -73,7 +74,7 @@ struct System{N, N2}
     s_temp2::Vector{Vec3{Float64}}
     s_temp3::Vector{Vec3{Float64}}
 
-    function System(; N, α=0.1, periodic=false, spin_rescaling=1.0, L, J=0., B=[0., 0., 0.], Λ=nothing, rng=nothing)
+    function System(; N, α=0.1, periodic=false, spin_rescaling=1.0, L, J=0., B=[0., 0., 0.], D = 0.0, Λ=nothing, rng=nothing)
 
         S = spin_operators(N)
 
@@ -89,9 +90,9 @@ struct System{N, N2}
                 @assert norm(Λ[i] - Λ'[i]) < 1e-12
             end
             # Remove trace
-            for i = 1:L
-                Λ[i] -= I*tr(Λ[i])/N
-            end
+            # for i = 1:L
+            #     Λ[i] -= I*tr(Λ[i])/N
+            # end
         end
 
         Z₀ = SVector{N,ComplexF64}((i==1 ? 1 : 0) for i=1:N)
@@ -115,7 +116,7 @@ struct System{N, N2}
         s_temp2 = zeros(Vec3{Float64}, L)
         s_temp3 = zeros(Vec3{Float64}, L)
 
-        return new{N, N^2}(periodic, spin_rescaling, S, L, J, B, Λ, rng, ξ, α, Z, s, ∇E, Z_temp1, Z_temp2, Z_temp3, Z_temp4, s_temp1, s_temp2, s_temp3)
+        return new{N, N^2}(periodic, spin_rescaling, S, L, J, B, D, Λ, rng, ξ, α, Z, s, ∇E, Z_temp1, Z_temp2, Z_temp3, Z_temp4, s_temp1, s_temp2, s_temp3)
     end
 end
 
@@ -160,6 +161,10 @@ function local_energy_and_gradient(sys::System{N}, s, i) where {N}
     E += -sys.B ⋅ s[i]
     ∇E += -sys.B
 
+    # LL easy axis, - D ∑ᵢ (nᵢᶻ)²
+    E += sys.D*s[i][3]^2
+    ∇E += Vec3(0, 0, 2sys.D*s[i][3])
+
     return (; E, ∇E)
 end
 
@@ -170,8 +175,9 @@ function set_gradient!(∇E, sys, n)
 end
 
 function apply_local_hamiltonians!(out, sys, ∇E, Z)
+    κ = sys.spin_rescaling
     for i = 1:length(Z)
-        out[i] = (∇E[i]⋅sys.S + sys.Λ[i]) * Z[i]
+        out[i] = κ * (∇E[i]⋅sys.S + sys.Λ[i]) * Z[i]
     end
     return nothing
 end
@@ -238,6 +244,9 @@ import Statistics: mean, std
 # pyplot()
 export fig1
 
-include("fig1.jl")
+include("models_and_utils.jl")
+# include("fig1.jl")
+# include("fig2.jl")
 
 end # module
+

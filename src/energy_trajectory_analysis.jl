@@ -95,7 +95,7 @@ end
 begin
     Es_all = []
     for kT ∈ kTs
-        sys_e = entangled_pair(; J)
+        sys_e = classical_system(; J)
         rand!(sys_e)
         Es_local = []
         @time for i ∈ 1:num_samples
@@ -135,26 +135,25 @@ end
 # end
 
 
+#= Set sampling bin widths (decorrelation times) for different models and temperatures =#
 # Entangled AFM (J=1.0)
-kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 2.5, 2.75, 3.0]
+kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5, 2.75, 3.0]
+
 bin_durs = [40.0, 35.0, 20.0, 10.0, 9.0, 7.5,  5.0, 5.0,  5.0, 4.0, 3.0, 3.0,  3.0]
 itp = LinearInterpolation(kTs, bin_durs)
 bin_en_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
 
 # Entangled FM (J=-1.0)
-kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 2.5, 2.75, 3.0]
 bin_durs = [40.0, 25.0, 15.0, 10.0, 7.5, 5.0,  5.0, 5.0,  4.0, 3.0, 3.0, 3.0,  3.0]
 itp = LinearInterpolation(kTs, bin_durs)
 bin_en_fm = kT -> kT < 0.01 ? 1.0 : itp(kT)
 
 # Classical AFM (J=1.0)
-kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 2.5, 2.75, 3.0]
-bin_durs = []
+bin_durs = [40.0, 25.0, 12.0, 8.5,  8.0, 7.5,  5.0, 4.0,  4.0, 3.0, 3.0, 3.0,  2.5]
 itp = LinearInterpolation(kTs, bin_durs)
-bin_en_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+bin_cl_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
 
 # Classical FM (J=-1.0)
-kTs =      [0.01, 0.25, 0.5,  0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 2.5, 2.75, 3.0]
-bin_durs = []
+bin_durs = [40.0, 30.0, 15.0, 12.0, 10.0, 7.5,  5.0, 4.9,  4.0, 3.5, 2.75, 2.5,  2.45]
 itp = LinearInterpolation(kTs, bin_durs)
-bin_en_afm = kT -> kT < 0.01 ? 1.0 : itp(kT)
+bin_cl_fm = kT -> kT < 0.01 ? 1.0 : itp(kT)
