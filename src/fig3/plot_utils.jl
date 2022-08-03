@@ -132,14 +132,16 @@ end
 
 
 
-dims = (20,20,1)
-rng = MersenneTwister(111)
-sys = su3_skyrmion_model(dims; h=15.25, rng)
-rand!(sys)
+begin
+    dims = (100,100,1)
+    rng = MersenneTwister(111)
+    sys = su3_skyrmion_model(dims; h=15.35, rng)
+    rand!(sys)
+end
 
 #= Run and save trajectory =#
 begin
-    dur = 100.0
+    dur = 40.0
     Δt = 0.004
     kT = 0.0
     integrator = LangevinHeunP(sys, kT, 0.1)
@@ -151,6 +153,9 @@ end
 begin 
     function plot_spins_color(Zs, sys;
         resolution=(600,400),
+        arrowlength=1.5,
+        arrowsize=0.3,
+        linewidth=0.15,
         kwargs...
     )
         fig = GLMakie.Figure(; resolution)
@@ -161,11 +166,13 @@ begin
         lengths = norm.(vecs)
         lengths .-= minimum(lengths)
         lengths ./= maximum(lengths)
-        color = get(ColorSchemes.viridis, lengths)
-
+        # color = get(ColorSchemes.viridis, lengths)
+        color = get(ColorSchemes.diverging_linear_bjr_30_55_c53_n256, lengths)
         GLMakie.arrows!(
             ax, points, vecs;
             color,
+            linewidth, arrowsize,
+            lengthscale=arrowlength,
         )
         fig
     end
