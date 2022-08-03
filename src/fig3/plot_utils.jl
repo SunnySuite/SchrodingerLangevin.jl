@@ -129,3 +129,45 @@ function animate_chirality(Zs, sys; kwargs...)
     lat_vecs = sys.lattice.lat_vecs
     animate_chirality(Zs, lat_vecs[:,1], lat_vecs[:,2]; kwargs...)
 end
+
+
+
+dims = (20,20,1)
+rng = MersenneTwister(111)
+sys = su3_skyrmion_model(dims; h=15.25, rng)
+rand!(sys)
+
+#= Run and save trajectory =#
+begin
+    dur = 100.0
+    Δt = 0.004
+    kT = 0.0
+    integrator = LangevinHeunP(sys, kT, 0.1)
+    Zs = ket_trajectory!(integrator, Δt, dur)
+    Z = Zs[:,:,:,:,end]
+end
+
+
+begin 
+    function plot_spins_color(Zs, sys;
+        resolution=(600,400),
+        kwargs...
+    )
+        fig = GLMakie.Figure(; resolution)
+        ax = GLMakie.LScene(fig[1,1]; show_axis=false, kwargs...)
+
+        points = GLMakie.Point3f0.(vec(sys.lattice))
+        vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
+        lengths = norm.(vecs)
+        lengths .-= minimum(lengths)
+        lengths ./= maximum(lengths)
+        color = get(ColorSchemes.viridis, lengths)
+
+        GLMakie.arrows!(
+            ax, points, vecs;
+            color,
+        )
+        fig
+    end
+    plot_spins_color(Z, sys)
+end

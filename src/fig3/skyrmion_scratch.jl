@@ -1,4 +1,3 @@
-# module 
 
 using GLMakie
 using Sunny
@@ -8,6 +7,8 @@ includet("model.jl")
 includet("sim_utils.jl")
 includet("plaquette_utils.jl")
 includet("plot_utils.jl")
+
+
 
 function bin_idcs(Zs, idx; width = 10)
     num_steps = size(Zs)[end]
@@ -45,35 +46,4 @@ function fig3_quench(; dims=(100,100,1), kT=0.00, Δt=0.01, α=0.1, τ=0.3, base
     # ]
     # push!(Z_frames, Zs[:,:,:,:,end])
     plot_chirality_multi(Z_frames, v₁, v₂; offset=10, resolution=(1300,300))
-end
-
-
-function fig3_steps(;
-    dims=(100,100,1),
-    kTs = [(0.5)^k for k ∈ 2:8],
-)
-    #= Set up system and initialize =#
-    rng = MersenneTwister(111)
-    sys = su3_skyrmion_model(dims; h=15.25, rng)
-    rand!(sys)
-
-
-    #= Run and save trajectory =#
-    frames = []
-    @time for (i, kT) ∈ enumerate(kTs)
-        println("Trajectory $i of $(length(kTs))")
-        Δt = 0.01
-        α = 0.1
-        dur = 20.0 
-        integrator = LangevinHeunP(sys, kT, α)
-        Zs = ket_trajectory!(integrator, Δt, dur) # don't need to save trajectory here
-        push!(frames, Zs[:,:,:,:,end])
-    end
-
-    #= Choose frames from trajectory =#
-    vecs = sys.lattice.lat_vecs
-    v₁, v₂ = vecs[:,1], vecs[:,2]
-
-    #= Plot Berry curvature per plaquette =#
-    plot_chirality_multi(frames, v₁, v₂; offset=10, resolution=(1300,300))
 end

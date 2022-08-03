@@ -1,23 +1,25 @@
 ## Just for development. Delete these comments before publishing.
-# includet("SchrodingerLangevin.jl")
-# includet("models_and_utils.jl")
-# using .SchrodingerLangevin
-# using Plots
-# using ColorSchemes
-# using LaTeXStrings
-# using Interpolations
-# using Random
-# import Measures: mm
-# import Statistics: mean, std
+# using Revise
+include("SchrodingerLangevin.jl")
+include("models_and_utils.jl")
+using .SchrodingerLangevin
+using Plots
+using ColorSchemes
+using LaTeXStrings
+using Interpolations
+using Random
+import Measures: mm
+import Statistics: mean, std
 
+begin 
 function fig1()
     #= Generate data for classical and entangled unit models =#
     # Trial parameters
     kT_max = 2.0
-    kTs = 0.0:0.15:kT_max
+    kTs = range(0.0, kT_max, length=16)
     Δt = 0.1
-    num_samples = 10_000
-    bin_func = kT -> 5.0 # Sampling bin width. Uniform value sufficient for estimating mean.
+    num_samples = 20_000
+    bin_func = kT -> 10.0 # Sampling bin width. Uniform value sufficient for estimating mean.
     rng = MersenneTwister(111)
 
     D = -1.0
@@ -49,35 +51,37 @@ function fig1()
         ytickfontsize = 12,
         palette=:seaborn_colorblind,
     )
-    marker1 = ( ;
-        label = "Dipole aniso numerical",
-        color = 1,
-        markershape = :cross,
-        markersize = 6.5,
-        markerstrokewidth = 6.5,
-    )
-    marker2 = (;
-        label = "SU(3) aniso numerical",
+    marker2 = ( ;
+        label = "SU(3) numerical",
         color = 2,
-        markershape = :xcross,
-        markersize = 5.0,
-        markerstrokewidth = 6.5,
+        alpha = 0.65,
+        # markershape = :cross,
+        markersize = 7.0,
+        markerstrokewidth = 1.0,
     )
-    line_cl = (;
-        label = "Dipole aniso",
-        linewidth = 1.5,
-        linestyle = :dash,
-        color = :black,
+    marker1 = (;
+        label = "Dipole numerical",
+        color = 1,
+        alpha = 0.65,
+        # markershape = :xcross,
+        markersize = 7.0,
+        markerstrokewidth = 1.0,
     )
     line_su3 = (;
-        label = "SU(3) aniso",
+        label = "SU(3)",
+        linewidth = 2.5,
         linestyle = :dot,
+        color = :black,
+    )
+    line_cl = (;
+        label = "Dipole",
+        linestyle = :dash,
         linewidth = 2.0,
         color = :black,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=1.5,
+        linewidth=2.0,
         color = :black,
     )
     yticks = -0.4:-0.1:-1.20
@@ -87,12 +91,12 @@ function fig1()
     p = plot(; 
         yticks = (yticks, [L"%$y" for y ∈ yticks]),
         xticks = (xticks, [L"%$x" for x ∈ xticks]),
-        ylims = (-1.30, -0.35),
+        ylims = (-1.15, -0.35),
         xlims = (-0.05, 2.05),
-        xlabel = L"E",
-        ylabel = L"k_bT",
+        ylabel = L"$\left\langle E \right\rangle$",
+        xlabel = L"$k_b T$",
         legend=:bottomright,
-        size=(600,350),
+        size=(600,425),
         left_margin=3mm,
         right_margin=3mm,
         params...
@@ -106,4 +110,7 @@ function fig1()
     savefig("fig1.pdf")
 
     return p
+end
+
+fig1()
 end

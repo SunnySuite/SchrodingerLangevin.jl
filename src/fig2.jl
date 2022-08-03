@@ -1,17 +1,18 @@
 ## Just for development. Delete these comments before publishing.
-# includet("SchrodingerLangevin.jl")
-# includet("models_and_utils.jl")
-# using .SchrodingerLangevin
-# using Plots
-# using ColorSchemes
-# using LaTeXStrings
-# using Interpolations
-# using LinearAlgebra
-# using Random
-# import Measures: mm
-# import Statistics: mean, std
+include("SchrodingerLangevin.jl")
+include("models_and_utils.jl")
+using .SchrodingerLangevin
+using Plots
+using ColorSchemes
+using LaTeXStrings
+using Interpolations
+using LinearAlgebra
+using Random
+import Measures: mm
+import Statistics: mean, std
 
 
+begin 
 function fig2()
     #= Generate data for classical and entangled unit models =#
 
@@ -19,7 +20,7 @@ function fig2()
     kT_max = 1.5
     kTs = 0.0:0.1:kT_max
     Δt = 0.1
-    num_samples = 10_000
+    num_samples = 20_000
     bin_func = kt -> 10.0 # Sampling bin width. Uniform value sufficient for estimating mean.
     rng = MersenneTwister(111)
 
@@ -66,35 +67,37 @@ function fig2()
         ytickfontsize = 12,
         palette=:seaborn_colorblind,
     )
-    marker1 = ( ;
-        label = "SU(2) CS Numerical",
-        color = 1,
-        markershape = :cross,
-        markersize = 7.0,
-        markerstrokewidth = 2.5,
-    )
-    marker2 = (;
-        label = "SU(4) CS Numerical",
+    marker2 = ( ;
+        label = "SU(4) numerical",
         color = 2,
-        markershape = :xcross,
-        markersize = 5.0,
-        markerstrokewidth = 2.5,
+        alpha = 0.65,
+        # markershape = :cross,
+        markersize = 7.0,
+        markerstrokewidth = 1.0,
+    )
+    marker1 = (;
+        label = "Dipole numerical",
+        color = 1,
+        alpha = 0.65,
+        # markershape = :xcross,
+        markersize = 7.0,
+        markerstrokewidth = 1.0,
     )
     line_cl = (;
-        label = "SU(2) CS",
-        linewidth = 1.5,
+        label = "Dipole",
+        linewidth = 2.0,
         linestyle = :dash,
         color = :black,
     )
     line_en = (;
-        label = "SU(4) CS",
+        label = "SU(4)",
         linestyle = :dot,
-        linewidth = 2.0,
+        linewidth = 2.5,
         color = :black,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=1.5,
+        linewidth=2.0,
         color = :black,
     )
     yticks_fm  = 0.0:-0.05:-0.25
@@ -104,12 +107,12 @@ function fig2()
     # FM (J < 0)
     p1 = plot(; 
         yticks = (yticks_fm, [L"%$y" for y ∈ yticks_fm]),
-        ylims = (-0.25*1.05, 0.0),
+        ylims = (-0.25*1.05, 0.05/3),
         xticks = (xticks, [L"%$x" for x ∈ xticks]),
         legend=false,
         params...
     )
-    plot!(kTs_ref, E_fm_cl; ylabel = L"E", line_cl...)
+    plot!(kTs_ref, E_fm_cl; ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_fm_en; line_en...)
     plot!(kTs_ref, E_fm_qu; line_qu...)
     scatter!(kTs, μs_fm_cl; marker1...)
@@ -118,12 +121,12 @@ function fig2()
     # AFM (J > 0)
     p2 = plot(;
         yticks = (yticks_afm, [L"%$y" for y ∈ yticks_afm]),
-        ylims = (-0.75*1.05, 0.0),
+        ylims = (-0.75*1.05, 0.05),
         xticks = (xticks, [L"%$x" for x ∈ xticks]),
         legend=:bottomright,
         params...
     )
-    plot!(kTs_ref, E_afm_cl; xlabel = L"k_bT", ylabel = L"E", line_cl...)
+    plot!(kTs_ref, E_afm_cl; xlabel = L"k_bT", ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_afm_en; line_en...)
     plot!(kTs_ref, E_afm_qu; line_qu...)
     scatter!(kTs, μs_afm_cl; marker1...)
@@ -132,11 +135,14 @@ function fig2()
     layout = @layout [a; b]
     p = plot(p1, p2;
         layout,
-        size=(600,600),
-        title = [L"J=-1.0" L"J=1.0"],
+        size=(600,700),
+        title = [L"(\mathrm{a})\quad J=-1.0" L"(\mathrm{b})\quad J=1.0"],
+        left_margin=3mm,
     )
 
     savefig("fig2.pdf")
 
     return p
+end
+fig2()
 end
