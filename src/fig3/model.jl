@@ -1,11 +1,10 @@
-using DrWatson
 using Random
-@quickactivate "SU3SkyrmionFormation"
 
 function su3_skyrmion_model(dims;
     J_ref=1.0,
     h = 15.5,
     D = 19.0,
+    rescaling = 1.0,
     rng = nothing,
 )
     isnothing(rng) && (rng = MersenneTwister())
@@ -13,7 +12,7 @@ function su3_skyrmion_model(dims;
 
     #= Model parameters =#
     J₁ = -J_ref
-    J₂ = (2/(1+√5)) * J_ref 
+    J₂ = (2.0/(1+√(5*rescaling))) * J_ref 
     Δ = 2.6
     N = 3
 

@@ -1,9 +1,3 @@
-using DrWatson
-@quickactivate "SU3SkyrmionFormation"
-
-using Sunny
-
-
 function anneal!(sampler, kTs)
     Es = zeros(length(kTs))        
     for (i, kT) in enumerate(kTs)

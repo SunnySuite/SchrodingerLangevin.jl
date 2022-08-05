@@ -3,7 +3,10 @@ using Observables
 using ColorSchemes
 using ColorTypes
 
-function plot_chirality(Z, v₁, v₂; colorscheme=ColorSchemes.viridis)
+function plot_chirality(Z, v₁, v₂;
+    colorscheme=ColorSchemes.RdBu,
+    clims = (-2π, 2π),
+)
     dims = size(Z)
     nx, ny = dims[1:2]
     v₁ = Point3f(v₁)
@@ -18,9 +21,9 @@ function plot_chirality(Z, v₁, v₂; colorscheme=ColorSchemes.viridis)
         for c ∈ 1:ny
             base = (r-1)*v₁ + (c-1)*v₂
             push!(pgons, plaq1(base))
-            push!(colors, get(colorscheme, Χ[1,r,c,1,1]))
+            push!(colors, get(colorscheme, Χ[1,r,c,1,1], clims))
             push!(pgons, plaq2(base))
-            push!(colors, get(colorscheme, Χ[2,r,c,1,1]))
+            push!(colors, get(colorscheme, Χ[2,r,c,1,1], clims))
         end
     end
 
@@ -34,7 +37,8 @@ end
 
 
 function plot_chirality_multi(Zs, v₁, v₂;
-    colorscheme=ColorSchemes.viridis,
+    colorscheme=ColorSchemes.RdBu,
+    clims = (-2π, 2π),
     offset = 1,
     kwargs...
 )
@@ -54,21 +58,21 @@ function plot_chirality_multi(Zs, v₁, v₂;
 
     for (i, Z) ∈ enumerate(Zs)
         v₀ = (i-1) * v_offset
-        Χ = plaquette_map(berry, Z)
+        Χ = (plaquette_map(berry, Z))
         pgons = GLMakie.Polygon[]
         colors = ColorTypes.RGB{Float64}[]
         for r ∈ 1:nx
             for c ∈ 1:ny
                 base = (r-1)*v₁ + (c-1)*v₂ + v₀
                 push!(pgons, plaq1(base))
-                push!(colors, get(colorscheme, Χ[1,r,c,1,1]))
+                push!(colors, get(colorscheme, Χ[1,r,c,1,1], clims))
                 push!(pgons, plaq2(base))
-                push!(colors, get(colorscheme, Χ[2,r,c,1,1]))
+                push!(colors, get(colorscheme, Χ[2,r,c,1,1], clims))
             end
         end
         poly!(ax, pgons; color=colors)
     end
-
+    Colorbar(fig[1,2]; colormap=colorscheme, colorrange=clims)
     fig
 end
 
