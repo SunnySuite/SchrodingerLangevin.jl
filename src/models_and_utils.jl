@@ -12,52 +12,59 @@ function energy_trajectory!(sys, dur, Δt, kT)
     return Es
 end
 
+mean(vals) = sum(vals) / length(vals)
+
+function sample_variance(vals)
+    N = length(vals)
+    μ = mean(vals) 
+    (1/(N-1)) * sum((vals .- μ) .^ 2)
+end
+
 function generate_statistics(Δt, num_samples, kTs;
     sys_func, 
-    bin_func,
-    dur_burnin=100.0,
+    dur_trajectory = 10.0,
+    dur_burnin=10.0,
 )
     μs = zero(kTs)
-    σs = zero(kTs)
+    sems = zero(kTs)
     for (i, kT) in enumerate(kTs)
         println("Collecting statistics for kT=$kT...")
 
         sys = sys_func()
         rand!(sys)
         energy_trajectory!(sys, dur_burnin, Δt, kT)
-        dur = bin_func(kT)
 
         Es = zeros(num_samples)
         for j ∈ 1:num_samples
-            E = energy_trajectory!(sys, dur, Δt, kT)
+            E = energy_trajectory!(sys, dur_trajectory, Δt, kT)
             Es[j] = mean(E) 
         end
         μs[i] = mean(Es)
-        σs[i] = std(Es)
+        sems[i] = √(sample_variance(Es)/num_samples)
     end
-    return (; μs, σs)
+    return (; μs, sems)
 end
 
 
 #= Models =#
-function classical_pair(; J=1.0, rng=nothing)
-    System(; N=2, L=2, J, rng)
+function classical_pair(; J=1.0, α=0.1, rng=nothing)
+    System(; N=2, L=2, J, rng, α)
 end
 
-function entangled_pair(; J=1.0, rng=nothing)
+function entangled_pair(; J=1.0, α=0.1, rng=nothing)
     v = [0.0 1.0 -1.0 0.0] / √2
     Λ = (J/4)*I(4) - J*v'*v
-    System(; N=4, L=1, J=0.0, Λ=[Λ], rng)
+    System(; N=4, L=1, J=0.0, Λ=[Λ], rng, α)
 end
 
-function dipole_anisotropy(; D=-1.0, rng=nothing)
-    System(; N=2, L=1, D, rng, spin_rescaling=2.0)
+function dipole_anisotropy(; D=-1.0, α=0.1, rng=nothing)
+    System(; N=2, L=1, D, rng, spin_rescaling=2.0, α)
 end
 
-function su3_anisotropy(; D=-1.0, rng=nothing)
+function su3_anisotropy(; D=-1.0, α=0.1, rng=nothing)
     Λ = zeros(ComplexF64, 3, 3)
     Λ[1,1] = Λ[3,3] = D  # D*(Sᶻ)² in spin-1 representation
-    System(; N=3, L=1, Λ=[Λ], D=0.0, rng)
+    System(; N=3, L=1, Λ=[Λ], D=0.0, rng, α)
 end
 
 

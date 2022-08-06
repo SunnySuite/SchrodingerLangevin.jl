@@ -2,6 +2,9 @@ using GLMakie
 using Observables
 using ColorSchemes
 using ColorTypes
+import Makie: get_dim, surface_normals
+using GeometryBasics
+using StaticArrays
 
 function plot_chirality(Z, v₁, v₂;
     colorscheme=ColorSchemes.RdBu,
@@ -15,6 +18,8 @@ function plot_chirality(Z, v₁, v₂;
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
     #idx = Node(1)
     Χ = plaquette_map(berry, Z)
+    max = maximum(abs.(Χ))
+    clims = (-max, max)
     pgons = GLMakie.Polygon[]
     colors = ColorTypes.RGB{Float64}[]
     for r ∈ 1:nx
@@ -53,12 +58,14 @@ function plot_chirality_multi(Zs, v₁, v₂;
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
 
     fig = Figure(; kwargs...)
-    ax = Axis(fig[1,1])
+    ax = Axis(fig[1,1:length(Zs)])
     hidespines!(ax); hidedecorations!(ax)
 
     for (i, Z) ∈ enumerate(Zs)
         v₀ = (i-1) * v_offset
         Χ = (plaquette_map(berry, Z))
+        # max = maximum(abs.(Χ))
+        # clims = (-max, max)
         pgons = GLMakie.Polygon[]
         colors = ColorTypes.RGB{Float64}[]
         for r ∈ 1:nx
@@ -72,8 +79,8 @@ function plot_chirality_multi(Zs, v₁, v₂;
         end
         poly!(ax, pgons; color=colors)
     end
-    Colorbar(fig[1,2]; colormap=colorscheme, colorrange=clims)
-    fig
+    # Colorbar(fig[1,2]; colormap=colorscheme, colorrange=clims)
+    fig, ax
 end
 
 
@@ -154,31 +161,120 @@ begin
 end
 
 
-begin 
-    function plot_spins_color(Zs, sys;
-        resolution=(600,400),
-        arrowlength=1.5,
-        arrowsize=0.3,
-        linewidth=0.15,
-        kwargs...
-    )
-        fig = GLMakie.Figure(; resolution)
-        ax = GLMakie.LScene(fig[1,1]; show_axis=false, kwargs...)
+function plot_spins_color(Zs, sys;
+    resolution=(600,400),
+    kwargs...
+)
+    fig = GLMakie.Figure(; resolution)
+    ax = GLMakie.LScene(fig[1,1]; show_axis=false, kwargs...)
 
-        points = GLMakie.Point3f0.(vec(sys.lattice))
-        vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
-        lengths = norm.(vecs)
-        lengths .-= minimum(lengths)
-        lengths ./= maximum(lengths)
-        # color = get(ColorSchemes.viridis, lengths)
-        color = get(ColorSchemes.diverging_linear_bjr_30_55_c53_n256, lengths)
-        GLMakie.arrows!(
-            ax, points, vecs;
-            color,
-            linewidth, arrowsize,
-            lengthscale=arrowlength,
-        )
-        fig
+    plot_spins_color!(ax, Zs, sys; resolution, kwargs...)
+    fig
+end
+
+function plot_spins_color!(ax, Zs, sys;
+    colorscheme = ColorSchemes.diverging_linear_bjr_30_55_c53_n256,
+    arrowlength=1.5,
+    arrowsize=0.3,
+    linewidth=0.15,
+    kwargs...
+)
+    points = GLMakie.Point3f0.(vec(sys.lattice))
+    vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
+    lengths = norm.(vecs)
+    lengths .-= minimum(lengths)
+    lengths ./= maximum(lengths)
+    # color = get(ColorSchemes.viridis, lengths)
+    # color = get(colorscheme, lengths)
+    color = [(get(colorscheme, length), length) for length ∈ lengths]
+    GLMakie.arrows!(
+        ax, points, vecs;
+        color,
+        linewidth, arrowsize,
+        lengthscale=arrowlength,
+        kwargs...,
+    )
+    fig
+end
+
+
+expectation(op, ψ) = real(ψ' * op * ψ)
+comm(a,b)     = a*b-b*a
+anticomm(a,b) = a*b + b*a
+
+function create_mesh(x, y, z)
+    positions = vec(map(CartesianIndices(z)) do i
+    GeometryBasics.Point{3, Float32}(
+        get_dim(x, i, 1, size(z)),
+        get_dim(y, i, 2, size(z)),
+        z[i])
+    end)
+    faces = decompose(GLTriangleFace, Rect2D(0f0, 0f0, 1f0, 1f0), size(z))
+    normals = surface_normals(x, y, z)
+    vertices = GeometryBasics.meta(positions; normals=normals)
+    meshObj = GeometryBasics.Mesh(vertices, faces)
+    meshObj
+end
+
+function T(ψ, sx, sy, sz)
+    t11 = expectation(sx*sx, ψ) - expectation(sx, ψ)^2
+    t12 = 0.5*expectation(anticomm(sx,sy), ψ) - expectation(sx, ψ)*expectation(sy, ψ)
+    t13 = 0.5*expectation(anticomm(sx,sz), ψ) - expectation(sx, ψ)*expectation(sz, ψ)
+    t22 = expectation(sy*sy, ψ) - expectation(sy, ψ)^2
+    t23 = 0.5*expectation(anticomm(sz,sy), ψ) - expectation(sz, ψ)*expectation(sy, ψ)
+    t33 = expectation(sz*sz, ψ) - expectation(sz, ψ)^2
+    SMatrix{3,3,Float64,9}([t11 t12 t13;
+                            t12 t22 t23;
+                            t13 t23 t33])
+end
+
+function ellipsoid_point(t, θ, ϕ)
+    t[:,1]*cos(θ)*cos(ϕ) + t[:,2]*cos(θ)*sin(ϕ) + t[:,3]*sin(θ) 
+end
+
+function points_from_tensor2(t, f0=SA[0.0, 0.0, 0.0]; num_θ=25, num_ϕ=50, scale=1.0)
+    θs = LinRange(-π/2, π/2, num_θ)
+    ϕs = LinRange(0.0, 2π, num_ϕ)
+    f1, f2, f3 = t[:,1], t[:,2], t[:,3]
+
+    points = [ellipsoid_point(t, θ, ϕ) for θ ∈ θs, ϕ ∈ ϕs] .* scale
+    xs = [f0[1] + points[i,j][1] for i ∈ 1:num_θ, j ∈ 1:num_ϕ]
+    ys = [f0[2] + points[i,j][2] for i ∈ 1:num_θ, j ∈ 1:num_ϕ]
+    zs = [f0[3] + points[i,j][3] for i ∈ 1:num_θ, j ∈ 1:num_ϕ]
+    create_mesh(xs, ys, zs)
+end
+
+
+function plot_spin_fluctuations!(ax, Zs, sys;
+    colorscheme = ColorSchemes.diverging_linear_bjr_30_55_c53_n256,
+    arrowlength=1.0,
+    arrowsize=0.3,
+    linewidth=0.15,
+    tensor_scale=1.0,
+    kwargs...
+)
+    points = GLMakie.Point3f0.(vec(sys.lattice))
+    vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
+    lengths = norm.(vecs)
+    lengths .-= minimum(lengths)
+    lengths ./= maximum(lengths)
+    # color = get(ColorSchemes.viridis, lengths)
+    color = [(get(colorscheme, length), length)  for length ∈ lengths]
+    GLMakie.arrows!(
+        ax, points, vecs;
+        color,
+        linewidth, arrowsize,
+        lengthscale=arrowlength,
+        kwargs...,
+    )
+
+    S = Sunny.gen_spin_ops(3)
+    dipoles = sys._dipoles
+    for i ∈ eachindex(Zs)
+        Z = Zs[i]
+        t = T(Z, S[1], S[2], S[3])
+        mesh_points = points_from_tensor2(t, arrowlength*dipoles[i] + points[i]; scale = tensor_scale)
+        mesh!(ax, mesh_points, color=(color[i][1], color[i][2]*0.5), shading=true, transparency=true) 
     end
-    plot_spins_color(Z, sys)
+
 end

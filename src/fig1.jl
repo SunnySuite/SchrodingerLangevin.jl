@@ -9,29 +9,35 @@ using LaTeXStrings
 using Interpolations
 using Random
 import Measures: mm
-import Statistics: mean, std
+import Statistics: mean
+using Measurements
+
+plotlyjs()
+pyplot()
 
 begin 
 function fig1()
     #= Generate data for classical and entangled unit models =#
     # Trial parameters
-    kT_max = 2.0
+    kT_max = 2.0  # Maximum temperature
     kTs = range(0.0, kT_max, length=16)
-    Δt = 0.1
-    num_samples = 20_000
-    bin_func = kT -> 10.0 # Sampling bin width. Uniform value sufficient for estimating mean.
-    rng = MersenneTwister(111)
+    Δt = 0.01  # Integration time step
+    α = 1.0  # Empirical damping parameter
+    num_samples = 10  # Number of estimates of the energy (number of trajectories)
+    dur_burnin = 10.0  # Burnin-duration for each trajectory
+    dur_trajectory = 20.0  # Duration of each trajectory
+    D = -1.0  # Onsite anisotropy
+    rng = MersenneTwister(11)
 
-    D = -1.0
     println("\nCollecting statistics for SU(2) spin with traditional anisotropy.")
-    sys_func = () -> dipole_anisotropy(; D, rng) 
-    (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_cl = μs
+    sys_func = () -> dipole_anisotropy(; D, rng, α) 
+    (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_trajectory, dur_burnin)
+    μs_cl, sems_cl = μs, sems
 
     println("\nCollecting statistics for SU(3) spin with SU(3) anisotropy.")
-    sys_func = () -> su3_anisotropy(; D, rng) 
-    (; μs) = generate_statistics(Δt, num_samples, kTs; sys_func, bin_func)
-    μs_su3 = μs
+    sys_func = () -> su3_anisotropy(; D, rng, α) 
+    (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_trajectory, dur_burnin)
+    μs_su3, sems_su3 = μs, sems
 
 
 
@@ -51,37 +57,46 @@ function fig1()
         ytickfontsize = 12,
         palette=:seaborn_colorblind,
     )
-    marker2 = ( ;
-        label = "SU(3) numerical",
-        color = 2,
-        alpha = 0.65,
-        # markershape = :cross,
-        markersize = 7.0,
-        markerstrokewidth = 1.0,
-    )
     marker1 = (;
         label = "Dipole numerical",
         color = 1,
         alpha = 0.65,
-        # markershape = :xcross,
         markersize = 7.0,
-        markerstrokewidth = 1.0,
+        markerstrokewidth = 0.5,
     )
-    line_su3 = (;
-        label = "SU(3)",
-        linewidth = 2.5,
-        linestyle = :dot,
-        color = :black,
+    marker2 = ( ;
+        label = "SU(3) numerical",
+        color = 2,
+        alpha = 0.65,
+        markersize = 7.0,
+        markerstrokewidth = 0.5,
+    )
+    error_bars = (;
+        markersize=8.0,
+        markerstrokewidth=1.0,
+        markerstrokecolor=:black,
+        markeralpha=1.00,
+        linewidth = 0.0,
+        label=false
     )
     line_cl = (;
         label = "Dipole",
+        linewidth = 1.0,
         linestyle = :dash,
-        linewidth = 2.0,
+        linealpha=0.6,
+        color = :black,
+    )
+    line_su3 = (;
+        label = "SU(3)",
+        linestyle = :dot,
+        linewidth = 1.5,
+        linealpha=0.6,
         color = :black,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=2.0,
+        linewidth=1.0,
+        linealpha=0.6,
         color = :black,
     )
     yticks = -0.4:-0.1:-1.20
@@ -104,7 +119,9 @@ function fig1()
     plot!(kTs_ref, E_cl; line_cl...)
     plot!(kTs_ref, E_su3; line_su3...)
     plot!(kTs_ref, E_qu; line_qu...)
+    plot!(kTs, μs_cl; yerr=sems_cl, error_bars...)
     scatter!(kTs, μs_cl; marker1...)
+    plot!(kTs, μs_su3; yerr=sems_su3, error_bars...) 
     scatter!(kTs, μs_su3; marker2...)
 
     savefig("fig1.pdf")
