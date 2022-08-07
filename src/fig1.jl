@@ -12,7 +12,6 @@ import Measures: mm
 import Statistics: mean
 using Measurements
 
-plotlyjs()
 pyplot()
 
 begin 
@@ -61,18 +60,18 @@ function fig1()
         label = "Dipole numerical",
         color = 1,
         alpha = 0.65,
-        markersize = 7.0,
+        markersize = 8.0,
         markerstrokewidth = 0.5,
     )
     marker2 = ( ;
         label = "SU(3) numerical",
         color = 2,
         alpha = 0.65,
-        markersize = 7.0,
+        markersize = 8.0,
         markerstrokewidth = 0.5,
     )
     error_bars = (;
-        markersize=8.0,
+        markersize=0.0,
         markerstrokewidth=1.0,
         markerstrokecolor=:black,
         markeralpha=1.00,
@@ -119,10 +118,10 @@ function fig1()
     plot!(kTs_ref, E_cl; line_cl...)
     plot!(kTs_ref, E_su3; line_su3...)
     plot!(kTs_ref, E_qu; line_qu...)
-    plot!(kTs, μs_cl; yerr=sems_cl, error_bars...)
     scatter!(kTs, μs_cl; marker1...)
-    plot!(kTs, μs_su3; yerr=sems_su3, error_bars...) 
+    plot!(kTs, μs_cl; yerr=sems_cl, error_bars...)
     scatter!(kTs, μs_su3; marker2...)
+    plot!(kTs, μs_su3; yerr=sems_su3, error_bars...) 
 
     savefig("fig1.pdf")
 

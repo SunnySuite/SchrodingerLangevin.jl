@@ -56,7 +56,8 @@ begin
     τ = 4.00
     base = 2.0
     # τs = [τ*(base^k) for k ∈ 0:2]   
-    τs = [√10, 10.0, 100]
+    τs = [4, 16, 256.0] 
+    # τs = [3, 10, 100.0] 
     idcs = [round(Int64, τ/Δt) for τ ∈ τs]
 
     Z_frames = [reshape(mean(Zs[:,:,:,:,bin_idcs(Zs, i; width=10)], dims=5), size(Zs)[1:4])
@@ -71,22 +72,57 @@ begin
     end
     vecs = sys.lattice.lat_vecs
     v₁, v₂ = vecs[:,1], vecs[:,2]
-    fig, ax = plot_chirality_multi(Z_frames, v₁, v₂; offset=10, resolution=(1200,300), colorscheme=ColorSchemes.RdBu, clims=(-1.0, 1.0))
+    factor = 10 
+    fig, ax = plot_chirality_multi(Z_frames, v₁, v₂; offset=10, resolution=(1200*factor,300*factor), colorscheme=ColorSchemes.RdBu, clims=(-1.0, 1.0))
+    save("skyrmion_panels.png", fig)
 
-    # scene = LScene(fig[1,end+1]; show_axis=false)
+    resolution = (round(Int, 400*factor), round(Int, 346.4101617*factor))
+    fig1 = plot_chirality(Z_frames[1], v₁, v₂; resolution)
+    save("skyrmion_panel_1.png", fig1)
+    fig2 = plot_chirality(Z_frames[2], v₁, v₂; resolution)
+    save("skyrmion_panel_2.png", fig2)
+    fig3 = plot_chirality(Z_frames[3], v₁, v₂; resolution)
+    save("skyrmion_panel_3.png", fig3)
+
+
+    # scene = Axis(fig[1,end+1])
     # plot_spins_color!(scene, Zs[:,:,:,:,end], sys; colorscheme=ColorSchemes.RdBu, arrowsize=0.5)
     fig
 end
 
 begin
-    fig2 = Figure()
-    ax2 = LScene(fig2[1,1]; show_axis=false)
-    plot_spin_fluctuations!(ax2, Zs[:,:,:,:,end], sys;
-        colorscheme=ColorSchemes.RdBu,
-        tensor_scale=0.4,
+    Z = Zs[:,:,:,:,25600]
+    fig = Figure()
+    fig, ax = plot_chirality(Z, sys)
+    ax = Axis(fig[2,1], aspect=1+sin(π/3))
+    hidespines!(ax)
+    hidedecorations!(ax)
+    plot_spins_color!(ax, Z, sys; colorscheme=ColorSchemes.RdBu, arrowsize=0.5)
+end
+
+begin
+    Z = Zs[:,:,:,:,25600]
+    fig = Figure()
+    fig, ax = plot_chirality(Z, sys; aspect=nothing, clims=(-1, 1))
+    # ax = Axis(fig[2,1], aspect=1+sin(π/3))
+    # hidespines!(ax)
+    # hidedecorations!(ax)
+    plot_spins_color!(ax, Z, sys; colorscheme=ColorSchemes.RdBu,
+        arrowsize=0.4,
+        linewidth=0.1,
         arrowlength=1.0,
-        linewidth=0.08,
-        arrowsize=0.3,
     )
-    fig2
+
+end
+
+begin
+    cam = cameracontrols(ax.scene)
+    x, y, z = 115, 63, 40 # 4 blue
+    # x, y, z = 121.5, 65, 20 # single blue bushel of wheat
+    # x, y, z = 120, 81.37, 20 # single blue perfect spiral
+    # x, y, z = 59, 44.00, 45 # half/half metastable structure
+    # x, y, z = 66.75, 30.50, 30 # single opening 
+    cam.lookat[] = [x, y, 0.0]
+    cam.eyeposition[] = [x, y, z]
+    update_cam!(ax.scene, cam)
 end

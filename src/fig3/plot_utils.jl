@@ -8,7 +8,9 @@ using StaticArrays
 
 function plot_chirality(Z, v₁, v₂;
     colorscheme=ColorSchemes.RdBu,
-    clims = (-2π, 2π),
+    resolution=(400, 400),
+    aspect = nothing,
+    clims = nothing,
 )
     dims = size(Z)
     nx, ny = dims[1:2]
@@ -16,29 +18,54 @@ function plot_chirality(Z, v₁, v₂;
     v₂ = Point3f(v₂)
     plaq1(p) = GLMakie.Polygon(Point2f.([p, p+v₁, p+v₂]))
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
-    #idx = Node(1)
-    Χ = plaquette_map(berry, Z)
-    max = maximum(abs.(Χ))
-    clims = (-max, max)
+    
+    χ = plaquette_map(berry, Z)
+
+    if isnothing(clims)
+        max = maximum(abs.(χ))
+        clims = (-max, max)
+    end
+
     pgons = GLMakie.Polygon[]
     colors = ColorTypes.RGB{Float64}[]
     for r ∈ 1:nx
         for c ∈ 1:ny
             base = (r-1)*v₁ + (c-1)*v₂
             push!(pgons, plaq1(base))
-            push!(colors, get(colorscheme, Χ[1,r,c,1,1], clims))
+            push!(colors, get(colorscheme, χ[1,r,c,1,1], clims))
             push!(pgons, plaq2(base))
-            push!(colors, get(colorscheme, Χ[2,r,c,1,1], clims))
+            push!(colors, get(colorscheme, χ[2,r,c,1,1], clims))
         end
     end
 
-    fig = Figure()
-    ax = Axis(fig[1,1])
-    hidespines!(ax); hidedecorations!(ax)
+    base = (0, 0) 
+    corner = (nx-1)*v₁ + (ny-1)*v₂
+    x1, x2 = base[1], corner[1]
+    y1, y2 = base[2], corner[2]
+    isnothing(aspect) && (aspect = (x2-x1)/(y2-y1))
+
+    fig = Figure(; resolution)
+    # ax = Axis(fig[1,1]; aspect)
+    ax = LScene(fig[1,1]; show_axis=false)
+    # xlims!(ax, x1, x2)
+    # ylims!(ax, y1, y2)
+    # hidespines!(ax); hidedecorations!(ax)
     poly!(ax, pgons; color=colors)
 
-    fig
+    fig, ax
 end
+
+function plot_chirality(sys::Sunny.SpinSystem; kwargs...)
+    Z = sys._coherents
+    lat_vecs = sys.lattice.lat_vecs
+    plot_chirality(Z, lat_vecs[:,1], lat_vecs[:,2]; kwargs...)
+end
+
+function plot_chirality(Zs, sys::Sunny.SpinSystem; kwargs...)
+    lat_vecs = sys.lattice.lat_vecs
+    plot_chirality(Zs, lat_vecs[:,1], lat_vecs[:,2]; kwargs...)
+end
+
 
 
 function plot_chirality_multi(Zs, v₁, v₂;
@@ -47,6 +74,7 @@ function plot_chirality_multi(Zs, v₁, v₂;
     offset = 1,
     kwargs...
 )
+    num_panels = length(Zs)
     Z = Zs[1]
     dims = size(Z)
     nx, ny = dims[1:2]
@@ -57,8 +85,14 @@ function plot_chirality_multi(Zs, v₁, v₂;
     plaq1(p) = GLMakie.Polygon(Point2f.([p, p+v₁, p+v₂]))
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
 
+    base = (0, 0) 
+    corner = (nx-1)*num_panels*v₁ + (num_panels-1)*offset*v₁ + (ny-1)*v₂
+    x1, x2 = base[1], corner[1]
+    y1, y2 = base[2], corner[2]
+    aspect = (x2-x1)/(y2-y1)
+
     fig = Figure(; kwargs...)
-    ax = Axis(fig[1,1:length(Zs)])
+    ax = Axis(fig[1,1:length(Zs)]; aspect)
     hidespines!(ax); hidedecorations!(ax)
 
     for (i, Z) ∈ enumerate(Zs)
@@ -83,12 +117,6 @@ function plot_chirality_multi(Zs, v₁, v₂;
     fig, ax
 end
 
-
-function plot_chirality(sys::Sunny.SpinSystem)
-    Z = sys._coherents
-    lat_vecs = sys.lattice.lat_vecs
-    plot_chirality(Z, lat_vecs[:,1], lat_vecs[:,2])
-end
 
 function get_colors(colorscheme, x)
     nx, ny = size(x)[2:3]
@@ -181,12 +209,14 @@ function plot_spins_color!(ax, Zs, sys;
 )
     points = GLMakie.Point3f0.(vec(sys.lattice))
     vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
+    points .-= points[1]
     lengths = norm.(vecs)
     lengths .-= minimum(lengths)
     lengths ./= maximum(lengths)
     # color = get(ColorSchemes.viridis, lengths)
     # color = get(colorscheme, lengths)
-    color = [(get(colorscheme, length), length) for length ∈ lengths]
+    # color = [(get(colorscheme, 2*length), length) for length ∈ lengths]
+    color = [(:firebrick2, length) for length ∈ lengths]
     GLMakie.arrows!(
         ax, points, vecs;
         color,
