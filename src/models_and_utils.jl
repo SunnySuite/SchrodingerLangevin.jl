@@ -12,11 +12,9 @@ function energy_trajectory!(sys, dur, Δt, kT)
     return Es
 end
 
-mean(vals) = sum(vals) / length(vals)
-
 function sample_variance(vals)
     N = length(vals)
-    μ = mean(vals) 
+    μ = sum(vals) / N 
     (1/(N-1)) * sum((vals .- μ) .^ 2)
 end
 

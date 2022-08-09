@@ -21,32 +21,31 @@ function fig2()
     kTs = 0.0:0.1:kT_max
     Δt = 0.01  # Integration time step
     α = 1.0  # Empirical damping parameter
-    num_samples = 10  # Number of estimates of the energy (number of trajectories)
-    num_samples_fm = 100  # Number of estimates of the energy for J=-1.0
+    num_samples = 100  # Number of estimates of the energy (number of trajectories)
     dur_burnin = 10.0  # Burnin-duration for each trajectory
     dur_trajectory = 20.0  # Duration of each trajectory
-    rng = MersenneTwister(17)
+    rng = MersenneTwister(11)
 
     # Run simulations
-    println("\nCollecting statistics to pair of SU(2) coherent spins (J=1)")
-    sys_func = () -> entangled_pair(; J=1.0, rng, α) 
+    println("\nCollecting statistics to pair of SU(2) coherent spins (J=-1)")
+    sys_func = () -> classical_pair(; J=-1.0, rng, α) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
-    μs_afm_en, sems_afm_en = μs, sems
+    μs_fm_cl, sems_fm_cl = μs, sems
 
-    println("\nCollecting statistics for single SU(4) engtangled pair (J=1)") 
+    println("\nCollecting statistics to pair of SU(4) entangled pair (J=-1)")
     sys_func = () -> entangled_pair(; J=-1.0, rng, α) 
-    (; μs, sems) = generate_statistics(Δt, num_samples_fm, kTs; sys_func, dur_burnin, dur_trajectory)
+    (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_fm_en, sems_fm_en = μs, sems
 
-    println("\nCollecting statistics to pair of SU(2) coherent spins (J=-1)")
-    sys_func = () -> classical_pair(; J=1.0, rng, α) 
+    println("\nCollecting statistics for single SU(2) coherent spins (J=1)") 
+    sys_func = () -> classical_pair(; J=1.0, rng) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_afm_cl, sems_afm_cl = μs, sems
 
-    println("\nCollecting statistics for single SU(4) engtangled pair (J=-1)") 
-    sys_func = () -> classical_pair(; J=-1.0, rng) 
-    (; μs, sems) = generate_statistics(Δt, num_samples_fm, kTs; sys_func, dur_burnin, dur_trajectory)
-    μs_fm_cl, sems_fm_cl = μs, sems
+    println("\nCollecting statistics for single SU(4) engtangled pair (J=1)") 
+    sys_func = () -> entangled_pair(; J=1.0, rng, α) 
+    (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
+    μs_afm_en, sems_afm_en = μs, sems
 
 
     #= Calculate analytical energies =#
@@ -68,47 +67,32 @@ function fig2()
         legendfontsize = 14,
         xtickfontsize = 12,
         ytickfontsize = 12,
-        palette=:seaborn_colorblind,
-    )
-    marker1 = (;
-        label = "Dipole numerical",
-        color = 1,
-        alpha = 0.65,
-        markersize = 8.0,
-        markerstrokewidth = 0.5,
-    )
-    marker2 = ( ;
-        label = "SU(4) numerical",
-        color = 2,
-        alpha = 0.65,
-        markersize = 8.0,
-        markerstrokewidth = 0.5,
+        palette=:RdBu,
     )
     error_bars = (;
-        markersize=0.0,
-        markerstrokewidth=1.0,
-        markerstrokecolor=:black,
-        markeralpha=1.00,
+        markersize=10.0,
+        markerstrokewidth=1.75,
+        markeralpha=0.9,
         linewidth = 0.0,
         label=false
     )
     line_cl = (;
-        label = "Dipole",
-        linewidth = 1.0,
+        label = "Classical (dipoles only)",
+        linewidth = 1.25,
         linestyle = :dash,
         linealpha=0.6,
         color = :black,
     )
     line_en = (;
-        label = "SU(4)",
+        label = "Classical (SU(4) spin)",
         linestyle = :dot,
-        linewidth = 1.5,
+        linewidth = 1.25,
         linealpha=0.6,
         color = :black,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=1.0,
+        linewidth=1.25,
         linealpha=0.6,
         color = :black,
     )
@@ -127,10 +111,8 @@ function fig2()
     plot!(kTs_ref, E_fm_cl; ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_fm_en; line_en...)
     plot!(kTs_ref, E_fm_qu; line_qu...)
-    scatter!(kTs, μs_fm_cl; marker1...)
-    plot!(kTs, μs_fm_cl; yerr=sems_fm_cl, error_bars...)
-    scatter!(kTs, μs_fm_en; marker2...)
-    plot!(kTs, μs_fm_en; yerr=sems_fm_en, error_bars...)
+    plot!(kTs, μs_fm_cl; yerr=sems_fm_cl, markerstrokecolor=10, error_bars...)
+    plot!(kTs, μs_fm_en; yerr=sems_fm_en, markerstrokecolor=3, error_bars...)
 
     # AFM (J > 0)
     p2 = plot(;
@@ -143,10 +125,8 @@ function fig2()
     plot!(kTs_ref, E_afm_cl; xlabel = L"k_bT", ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_afm_en; line_en...)
     plot!(kTs_ref, E_afm_qu; line_qu...)
-    scatter!(kTs, μs_afm_cl; marker1...)
-    plot!(kTs, μs_afm_cl; yerr=sems_afm_cl, error_bars...)
-    scatter!(kTs, μs_afm_en; marker2...)
-    plot!(kTs, μs_afm_en; yerr=sems_afm_en, error_bars...)
+    plot!(kTs, μs_afm_cl; yerr=sems_afm_cl, markerstrokecolor=10, error_bars...)
+    plot!(kTs, μs_afm_en; yerr=sems_afm_en, markerstrokecolor=3, error_bars...)
 
     layout = @layout [a; b]
     p = plot(p1, p2;

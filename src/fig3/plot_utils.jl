@@ -72,21 +72,27 @@ function plot_chirality_multi(Zs, v₁, v₂;
     colorscheme=ColorSchemes.RdBu,
     clims = (-2π, 2π),
     offset = 1,
+    numcols = nothing,
     kwargs...
 )
-    num_panels = length(Zs)
+    numpanels = length(Zs)
+    isnothing(numcols) && (numcols = numpanels)
+    numrows = floor(Int, (numpanels - 1) / numcols ) + 1
+
     Z = Zs[1]
     dims = size(Z)
     nx, ny = dims[1:2]
     v₁ = Point3f(v₁)
     v₂ = Point3f(v₂)
-    v_offset = v₁ * (nx+offset)
+    offset1 = v₁ * (nx+offset)
+    offset2 = -v₂ * (ny+offset)
 
     plaq1(p) = GLMakie.Polygon(Point2f.([p, p+v₁, p+v₂]))
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
 
     base = (0, 0) 
-    corner = (nx-1)*num_panels*v₁ + (num_panels-1)*offset*v₁ + (ny-1)*v₂
+    corner = (nx-1)*numcols*v₁ + (numcols-1)*offset*v₁ + 
+             (ny-1)*numrows*v₂ + (numrows-1)*offset*v₂
     x1, x2 = base[1], corner[1]
     y1, y2 = base[2], corner[2]
     aspect = (x2-x1)/(y2-y1)
@@ -96,7 +102,8 @@ function plot_chirality_multi(Zs, v₁, v₂;
     hidespines!(ax); hidedecorations!(ax)
 
     for (i, Z) ∈ enumerate(Zs)
-        v₀ = (i-1) * v_offset
+        r, c = fldmod1(i, numcols)
+        v₀ = (c-1) * offset1 + (r-1) * offset2
         Χ = (plaquette_map(berry, Z))
         # max = maximum(abs.(Χ))
         # clims = (-max, max)
@@ -118,14 +125,14 @@ function plot_chirality_multi(Zs, v₁, v₂;
 end
 
 
-function get_colors(colorscheme, x)
+function get_colors(colorscheme, x, clims=(-1, 1))
     nx, ny = size(x)[2:3]
     colors = Array{ColorTypes.RGB{Float64}, 1}(undef, nx*ny*2)
     count = 1
     for c ∈ 1:ny, r ∈ 1:nx
-        colors[count] = get(colorscheme, x[1,r,c,1,1])
+        colors[count] = get(colorscheme, x[1,r,c,1,1], clims)
         count += 1
-        colors[count] = get(colorscheme, x[2,r,c,1,1])
+        colors[count] = get(colorscheme, x[2,r,c,1,1], clims)
         count += 1
     end
     colors
@@ -133,9 +140,11 @@ end
 
 function animate_chirality(Zs, v₁, v₂;
     filename = "chirality_anim.mp4",
-    colorscheme=ColorSchemes.viridis,
+    colorscheme=ColorSchemes.RdBu,
+    clims=(-2π, 2π),
     framerate=30,
     skip_interval=1,
+    text = nothing,
 )
     dims = size(Zs)[1:4]
     nx, ny = dims[1:2]
@@ -157,6 +166,10 @@ function animate_chirality(Zs, v₁, v₂;
     ax = Axis(fig[1,1])
     hidespines!(ax); hidedecorations!(ax)
     poly!(ax, pgons; color=colors)
+    if !isnothing(text)
+        label = @lift(text[$idx])
+        text!(ax, 0, 80.0, 0; text=label)
+    end
 
     numsteps = size(Zs)[end]
     GLMakie.record(fig, filename, 1:skip_interval:numsteps; framerate) do i
@@ -216,7 +229,7 @@ function plot_spins_color!(ax, Zs, sys;
     # color = get(ColorSchemes.viridis, lengths)
     # color = get(colorscheme, lengths)
     # color = [(get(colorscheme, 2*length), length) for length ∈ lengths]
-    color = [(:firebrick2, length) for length ∈ lengths]
+    color = [(:chartreuse2, length) for length ∈ lengths]
     GLMakie.arrows!(
         ax, points, vecs;
         color,

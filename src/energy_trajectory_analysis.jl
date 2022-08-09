@@ -1,6 +1,8 @@
 includet("SchrodingerLangevin.jl")
 using .SchrodingerLangevin
 
+include("models_and_utils.jl")
+
 using Random
 # using Plots
 using LinearAlgebra
@@ -85,17 +87,19 @@ using Statistics
 # Parameters
 begin
     J = -1.0
+    D = -1.0
+    α = 1.0
     Δt = 0.01
-    dur = 500.0
-    dur_bi = 100.0
-    kTs = [0.01, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 2.5, 2.75, 3.0]
-    num_samples = 250
+    dur = 100.0
+    dur_bi = 20.0
+    kTs = [0.01, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+    num_samples = 100 
 end
 
 begin
     Es_all = []
     for kT ∈ kTs
-        sys_e = classical_system(; J)
+        sys_e = su3_anisotropy(; D, α)
         rand!(sys_e)
         Es_local = []
         @time for i ∈ 1:num_samples
@@ -110,7 +114,7 @@ end
 
 begin
     ts = collect(0:length(Es_all[1][1])-1) .* Δt
-    i_max = findfirst(x -> x > 50, ts)
+    i_max = findfirst(x -> x > 10, ts)
     fig = GLMakie.Figure(resolution=(800,600))
     num_cols = 3
     for (i, Es) ∈ enumerate(Es_all)
