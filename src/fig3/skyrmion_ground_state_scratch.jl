@@ -158,9 +158,12 @@ begin
     Zs = sys_hao._coherents
     vecs = sys_hao.lattice.lat_vecs
     v1, v2 = vecs[:,1], vecs[:,2]
-    fig, ax = plot_chirality(Zs, v1, v2; clims=(-0.3, 0.3))
+    # fig, ax = plot_chirality(Zs, v1, v2; clims=(-1.0, 1.0))
 
-    # plot_spins_color!(ax, Zs, sys_hao)
+    fig = Figure(resolution=(1000,800))
+    ax = Axis(fig[1,1])
+    
+    fig = plot_spins_color!(ax, Zs, sys_hao)
     fig
 end
 
