@@ -73,6 +73,7 @@ function plot_chirality_multi(Zs, v₁, v₂;
     clims = (-2π, 2π),
     offset = 1,
     numcols = nothing,
+    texts = nothing,
     kwargs...
 )
     numpanels = length(Zs)
@@ -84,21 +85,28 @@ function plot_chirality_multi(Zs, v₁, v₂;
     nx, ny = dims[1:2]
     v₁ = Point3f(v₁)
     v₂ = Point3f(v₂)
-    offset1 = v₁ * (nx+offset)
-    offset2 = -v₂ * (ny+offset)
+    v_off_1 = [norm(v₁), 0, 0]
+    v_off_2 = [0, -norm(v₂), 0]
+    # v_off_2 = v₂ 
+    offset1 = v_off_1 * (nx+offset)
+    offset2 = v_off_2 * (ny+offset)
 
     plaq1(p) = GLMakie.Polygon(Point2f.([p, p+v₁, p+v₂]))
     plaq2(p) = GLMakie.Polygon(Point2f.([p+v₁, p+v₁+v₂, p+v₂]))
 
-    base = (0, 0) 
-    corner = (nx-1)*numcols*v₁ + (numcols-1)*offset*v₁ + 
-             (ny-1)*numrows*v₂ + (numrows-1)*offset*v₂
+    # base = (0, 0) 
+    # corner = (nx-1)*numcols*v₁ + (numcols-1)*offset*v_off_1 + 
+    #          (ny-1)*numrows*v₂ + (numrows-1)*offset*v_off_2
+    base =   (numcols-1)*offset*v_off_1 + 
+             (ny-1)*numrows*v₂ + (numrows-1)*offset*v_off_2
+    corner = (nx-1)*numcols*v₁ + (numcols-1)*offset*v_off_1 + 
+             (numrows-1)*offset*v_off_2
     x1, x2 = base[1], corner[1]
     y1, y2 = base[2], corner[2]
-    aspect = (x2-x1)/(y2-y1)
+    aspect = abs((x2-x1)/(y2-y1))
 
     fig = Figure(; kwargs...)
-    ax = Axis(fig[1,1:length(Zs)]; aspect)
+    ax = Axis(fig[1,1:length(Zs)]) #; aspect)
     hidespines!(ax); hidedecorations!(ax)
 
     for (i, Z) ∈ enumerate(Zs)
@@ -119,6 +127,9 @@ function plot_chirality_multi(Zs, v₁, v₂;
             end
         end
         poly!(ax, pgons; color=colors)
+        if !isnothing(texts)
+            text!(ax, v₀[1]-75.0, v₀[2]; text=texts[i])
+        end
     end
     # Colorbar(fig[1,2]; colormap=colorscheme, colorrange=clims)
     fig, ax
@@ -229,7 +240,7 @@ function plot_spins_color!(ax, Zs, sys;
     # color = get(ColorSchemes.viridis, lengths)
     # color = get(colorscheme, lengths)
     # color = [(get(colorscheme, 2*length), length) for length ∈ lengths]
-    color = [(:chartreuse2, length) for length ∈ lengths]
+    color = [(:firebrick2, length) for length ∈ lengths]
     GLMakie.arrows!(
         ax, points, vecs;
         color,

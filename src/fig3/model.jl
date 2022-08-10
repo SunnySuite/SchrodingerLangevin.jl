@@ -30,7 +30,8 @@ function su3_skyrmion_model(dims;
     #= Set up Hamiltonian =#
     # Exchange
     bond1 = Bond(1, 1, [1, 0, 0])  #  nearest
-    bond2 = Bond(1, 1, [-1, 2, 0])  # next-nearest
+    # bond2 = Bond(1, 1, [-1, 2, 0])  # next-nearest
+    bond2 = Bond(1, 1, [1, 2, 0])  # next-nearest
     Jex1 = J₁ * [1.0 0.0 0.0;
                  0.0 1.0 0.0;
                  0.0 0.0 Δ]

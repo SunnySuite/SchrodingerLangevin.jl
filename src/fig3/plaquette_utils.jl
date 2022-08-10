@@ -27,7 +27,7 @@ function berry(o₁, o₂, o₃)
    n₁ = o₁' * o₂
    n₂ = o₂' * o₃
    n₃ = o₃' * o₁
-   2 * arg(n₁ * n₂ * n₃) 
+   2 * angle(n₁ * n₂ * n₃) 
 end
 
 

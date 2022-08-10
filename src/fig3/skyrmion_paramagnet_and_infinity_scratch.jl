@@ -132,3 +132,32 @@ begin
         text
     )
 end
+
+
+
+@time for _ ∈ 1:10000
+    evolve!(integrator, Δt)
+end
+
+energy(sys)/10000
+
+begin
+    fig = Figure()
+    ax = Axis(fig[1,1])
+    fig = plot_spins_color!(ax, sys._coherents, sys)
+    save("test.png", fig)
+end
+
+begin
+    Zs = copy(sys._coherents)
+    vecs = sys_hao.lattice.lat_vecs
+    v1, v2 = vecs[:,1], vecs[:,2]
+    fig, ax = plot_chirality(Zs, v1, v2; clims=(-1.0, 1.0), resolution=(1800,1200))
+
+    # fig = Figure(resolution=(1000,800))
+    # ax = Axis(fig[1,1])
+    
+    fig = plot_spins_color!(ax, Zs, sys_hao)
+    save("test.png", fig)
+    fig
+end

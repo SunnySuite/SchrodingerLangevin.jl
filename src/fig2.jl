@@ -71,30 +71,31 @@ function fig2()
     )
     error_bars = (;
         markersize=10.0,
-        markerstrokewidth=1.75,
-        markeralpha=0.9,
+        markerstrokewidth=1.5,
+        markeralpha=0.7,
         linewidth = 0.0,
-        label=false
+        label=false,
+        markerstrokecolor=:blue3,
     )
     line_cl = (;
         label = "Classical (dipoles only)",
         linewidth = 1.25,
-        linestyle = :dash,
+        linestyle = :dot,
         linealpha=0.6,
         color = :black,
     )
     line_en = (;
         label = "Classical (SU(4) spin)",
-        linestyle = :dot,
+        linestyle = :dash,
         linewidth = 1.25,
         linealpha=0.6,
         color = :black,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=1.25,
-        linealpha=0.6,
-        color = :black,
+        linewidth=2.00,
+        linealpha=0.8,
+        color = :red,
     )
     yticks_fm  = 0.0:-0.05:-0.25
     yticks_afm = 0.0:-0.125:-0.75
