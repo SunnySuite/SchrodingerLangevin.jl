@@ -1,20 +1,3 @@
-## Just for development. Delete these imports before publishing.
-# using Revise
-include("SchrodingerLangevin.jl")
-include("models_and_utils.jl")
-using .SchrodingerLangevin
-using Plots
-using ColorSchemes
-using LaTeXStrings
-using Interpolations
-using Random
-import Measures: mm
-import Statistics: mean
-using Measurements
-
-pyplot()
-
-begin 
 function fig1()
     #= Generate data for classical and entangled unit models =#
     # Trial parameters
@@ -122,7 +105,4 @@ function fig1()
     savefig("fig1.pdf")
 
     return p
-end
-
-fig1()
 end

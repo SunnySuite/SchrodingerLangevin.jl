@@ -243,9 +243,11 @@ import Measures: mm
 import Statistics: mean, std
 export fig1, fig2
 
-# include("models_and_utils.jl")
-# include("fig1.jl")
-# include("fig2.jl")
+# pyplot
+
+include("models_and_utils.jl")
+include("fig1.jl")
+include("fig2.jl")
 
 end # module
 

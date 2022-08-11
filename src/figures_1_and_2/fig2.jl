@@ -1,18 +1,3 @@
-## Just for development. Delete these comments before publishing.
-include("SchrodingerLangevin.jl")
-include("models_and_utils.jl")
-using .SchrodingerLangevin
-using Plots
-using ColorSchemes
-using LaTeXStrings
-using Interpolations
-using LinearAlgebra
-using Random
-import Measures: mm
-import Statistics: mean, std
-
-
-begin 
 function fig2()
     #= Generate data for classical and entangled unit models =#
 
@@ -140,6 +125,4 @@ function fig2()
     savefig("fig2.pdf")
 
     return p
-end
-fig2()
 end
