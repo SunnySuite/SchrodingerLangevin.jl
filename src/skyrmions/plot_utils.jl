@@ -70,7 +70,7 @@ end
 
 function plot_chirality(Zs, sys;
     colorscheme=ColorSchemes.RdBu, clims = (-1, 1), offset_spacing = 1,
-    numcols = nothing, texts = nothing, fig_kwargs...
+    numcols = nothing, texts = nothing, force_aspect = true, fig_kwargs...
 )
     # Consolidate lattice info and panel layout
     numpanels = length(Zs)
@@ -89,7 +89,11 @@ function plot_chirality(Zs, sys;
 
     # Set up figure
     fig = Figure(; fig_kwargs...)
-    ax = Axis(fig[1,1:length(Zs)]; aspect)
+    if force_aspect 
+        ax = Axis(fig[1,1:length(Zs)]; aspect)
+    else
+        ax = Axis(fig[1,1:length(Zs)])
+    end
     hidespines!(ax); hidedecorations!(ax)
 
     # Plot panels
@@ -130,7 +134,8 @@ function plot_spins_color!(ax, Zs, sys;
     linewidth=0.15, kwargs...
 )
     points = GLMakie.Point3f0.(vec(sys.lattice))
-    vecs = GLMakie.Vec3f0.(vec(sys._dipoles))
+    dipoles = Sunny.expected_spin.(Zs)
+    vecs = GLMakie.Vec3f0.(vec(dipoles))
     points .-= points[1]  # Align with plaquettes, which start at (0,0,0)
     lengths = norm.(vecs)
     lengths ./= maximum(lengths)
