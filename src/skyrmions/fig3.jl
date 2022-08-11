@@ -31,7 +31,7 @@ function fig3()
     # Create and save plot
     println("Generating figure...")
     fig, _ = plot_chirality(frames, sys;
-        resolution=(1800,600), offset_spacing=10, clims=(-1,1)
+        resolution=(1800,600), offset_spacing=10
     )
     save("fig3.png", fig)
 

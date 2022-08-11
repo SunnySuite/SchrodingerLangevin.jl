@@ -241,6 +241,7 @@ using LaTeXStrings
 using Interpolations
 import Measures: mm
 import Statistics: mean, std
+import SpecialFunctions: erf
 export fig1, fig2
 
 # pyplot

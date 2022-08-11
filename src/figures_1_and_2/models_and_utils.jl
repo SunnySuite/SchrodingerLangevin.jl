@@ -1,6 +1,6 @@
-import SpecialFunctions: erf
-
-#= Functions for generating statistics =#
+################################################################################
+# Functions for generating statistics
+################################################################################
 function energy_trajectory!(sys, dur, Δt, kT)
     n = round(Int, dur/Δt)
     Es = zeros(n+1)
@@ -19,9 +19,7 @@ function sample_variance(vals)
 end
 
 function generate_statistics(Δt, num_samples, kTs;
-    sys_func, 
-    dur_trajectory = 10.0,
-    dur_burnin=10.0,
+    sys_func, dur_trajectory = 10.0, dur_burnin=10.0,
 )
     μs = zero(kTs)
     sems = zero(kTs)
@@ -43,8 +41,9 @@ function generate_statistics(Δt, num_samples, kTs;
     return (; μs, sems)
 end
 
-
-#= Models =#
+################################################################################
+# Models
+################################################################################
 function classical_pair(; J=1.0, α=0.1, rng=nothing)
     System(; N=2, L=2, J, rng, α)
 end
@@ -66,8 +65,9 @@ function su3_anisotropy(; D=-1.0, α=0.1, rng=nothing)
 end
 
 
-
-#= Analytical energy functions =#
+################################################################################
+# Analytical energy functions
+################################################################################
 function energy_pair_dipole(β, J=1.0)
     (1/β) - (J/4)*coth(β*J/4)
 end

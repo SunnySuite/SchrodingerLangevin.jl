@@ -1,5 +1,5 @@
 function quench_animation(;
-    dur=256.0, sample_period=80, filename="chirality_animation.mp4"
+    dur=256.0, sample_period=100, filename="chirality_animation.mp4"
 )
     ## Set up model
     dims = (100, 100, 1)

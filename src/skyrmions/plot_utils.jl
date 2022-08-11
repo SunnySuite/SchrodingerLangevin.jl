@@ -5,7 +5,7 @@ function berry(o₁, o₂, o₃)
    n₁ = o₁' * o₂
    n₂ = o₂' * o₃
    n₃ = o₃' * o₁
-   2 * angle(n₁ * n₂ * n₃) 
+   angle(n₁ * n₂ * n₃) 
 end
 
 
@@ -69,7 +69,7 @@ end
 
 
 function plot_chirality(Zs, sys;
-    colorscheme=ColorSchemes.RdBu, clims = (-1, 1), offset_spacing = 1,
+    colorscheme=ColorSchemes.RdBu, clims = (-0.5, 0.5), offset_spacing = 1,
     numcols = nothing, texts = nothing, force_aspect = true, fig_kwargs...
 )
     # Consolidate lattice info and panel layout
@@ -123,7 +123,7 @@ function plot_chirality(Zs, sys;
 end
 
 function plot_chirality(sys;
-    colorscheme=ColorSchemes.RdBu, clims = (-1, 1), offset = 1,
+    colorscheme=ColorSchemes.RdBu, clims = (-0.5, 0.5), offset = 1,
     numcols = nothing, texts = nothing, fig_kwargs...
 )
     plot_chirality([sys._coherents], sys; colorscheme, clims, offset, numcols, texts, fig_kwargs...)
@@ -153,7 +153,7 @@ end
 ################################################################################
 # Animation functions 
 ################################################################################
-function get_colors(colorscheme, x, clims=(-1, 1))
+function get_colors(colorscheme, x, clims=(-0.5, 0.5))
     nx, ny = size(x)[2:3] # First index is plaquette index
     colors = Array{ColorTypes.RGB{Float64}, 1}(undef, nx*ny*2)
     count = 1
@@ -168,7 +168,7 @@ end
 
 function animate_chirality(Zs, sys;
     filename = "chirality_anim.mp4", colorscheme=ColorSchemes.RdBu,
-    clims=(-1, 1), framerate=30, skip_interval=1, text = nothing,
+    clims=(-0.5, 0.5), framerate=30, skip_interval=1, text = nothing,
 )
     # Consolidate lattice information
     lat_vecs = sys.lattice.lat_vecs
