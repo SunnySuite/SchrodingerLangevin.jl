@@ -44,24 +44,24 @@ end
 ################################################################################
 # Models
 ################################################################################
-function classical_pair(; J=1.0, α=0.1, rng=nothing)
-    System(; N=2, L=2, J, rng, α)
+function classical_pair(; J=1.0, λ=0.1, rng=nothing)
+    System(; N=2, L=2, J, rng, λ)
 end
 
-function entangled_pair(; J=1.0, α=0.1, rng=nothing)
+function entangled_pair(; J=1.0, λ=0.1, rng=nothing)
     v = [0.0 1.0 -1.0 0.0] / √2
     Λ = (J/4)*I(4) - J*v'*v
-    System(; N=4, L=1, J=0.0, Λ=[Λ], rng, α)
+    System(; N=4, L=1, J=0.0, Λ=[Λ], rng, λ)
 end
 
-function dipole_anisotropy(; D=-1.0, α=0.1, rng=nothing)
-    System(; N=2, L=1, D, rng, spin_rescaling=2.0, α)
+function dipole_anisotropy(; D=-1.0, λ=0.1, rng=nothing)
+    System(; N=2, L=1, D, rng, spin_rescaling=2.0, λ)
 end
 
-function su3_anisotropy(; D=-1.0, α=0.1, rng=nothing)
+function su3_anisotropy(; D=-1.0, λ=0.1, rng=nothing)
     Λ = zeros(ComplexF64, 3, 3)
     Λ[1,1] = Λ[3,3] = D  # D*(Sᶻ)² in spin-1 representation
-    System(; N=3, L=1, Λ=[Λ], D=0.0, rng, α)
+    System(; N=3, L=1, Λ=[Λ], D=0.0, rng, λ)
 end
 
 

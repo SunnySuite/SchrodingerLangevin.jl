@@ -6,6 +6,7 @@ using LinearAlgebra
 using StaticArrays
 using Random
 
+
 const Vec3 = SVector{3, T} where T
 const Mat3 = SMatrix{3, 3, T} where T
 
@@ -57,7 +58,7 @@ struct System{N, N2}
 
     rng::AbstractRNG
     ξ::Vector{SVector{N, ComplexF64}} # Random noise for Langevin integration 
-    α::Float64 # Damping coefficient
+    λ::Float64 # Damping coefficient
 
     Z::Vector{SVector{N, ComplexF64}} # Coherent state, taken to be normalized
     s::Vector{Vec3{Float64}} # Spin dipole expectation values
@@ -74,7 +75,7 @@ struct System{N, N2}
     s_temp2::Vector{Vec3{Float64}}
     s_temp3::Vector{Vec3{Float64}}
 
-    function System(; N, α=0.1, periodic=false, spin_rescaling=1.0, L, J=0., B=[0., 0., 0.], D = 0.0, Λ=nothing, rng=nothing)
+    function System(; N, λ=0.1, periodic=false, spin_rescaling=1.0, L, J=0., B=[0., 0., 0.], D = 0.0, Λ=nothing, rng=nothing)
 
         S = spin_operators(N)
 
@@ -116,7 +117,7 @@ struct System{N, N2}
         s_temp2 = zeros(Vec3{Float64}, L)
         s_temp3 = zeros(Vec3{Float64}, L)
 
-        return new{N, N^2}(periodic, spin_rescaling, S, L, J, B, D, Λ, rng, ξ, α, Z, s, ∇E, Z_temp1, Z_temp2, Z_temp3, Z_temp4, s_temp1, s_temp2, s_temp3)
+        return new{N, N^2}(periodic, spin_rescaling, S, L, J, B, D, Λ, rng, ξ, λ, Z, s, ∇E, Z_temp1, Z_temp2, Z_temp3, Z_temp4, s_temp1, s_temp2, s_temp3)
     end
 end
 
@@ -195,10 +196,10 @@ end
 
 
 function integrate_rhs_aux!(rhs, sys, Δt, kT, ∇E, Z)
-    (; ξ, α) = sys 
+    (; ξ, λ) = sys 
     apply_local_hamiltonians!(rhs, sys, ∇E, Z)
     for i = 1:sys.L
-        rhs[i] = -im*√(2*Δt*kT*α)*ξ[i] - Δt*(im+α)*rhs[i]
+        rhs[i] = -im*√(2*Δt*kT*λ)*ξ[i] - Δt*(im+λ)*rhs[i]
     end
 end
 
@@ -244,7 +245,7 @@ import Statistics: mean, std
 import SpecialFunctions: erf
 export fig1, fig2
 
-# pyplot
+pyplot()
 
 include("models_and_utils.jl")
 include("fig1.jl")

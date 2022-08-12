@@ -5,30 +5,30 @@ function fig2()
     kT_max = 1.5 # Maximum temperature
     kTs = 0.0:0.1:kT_max
     Δt = 0.01  # Integration time step
-    α = 1.0  # Empirical damping parameter
-    num_samples = 100  # Number of estimates of the energy (number of trajectories)
+    λ = 1.0  # Empirical damping parameter
+    num_samples = 10  # Number of estimates of the energy (number of trajectories)
     dur_burnin = 10.0  # Burnin-duration for each trajectory
-    dur_trajectory = 20.0  # Duration of each trajectory
-    rng = MersenneTwister(11)
+    dur_trajectory = 100.0  # Duration of each trajectory
+    rng = MersenneTwister(12)
 
     # Run simulations
     println("\nCollecting statistics to pair of SU(2) coherent spins (J=-1)")
-    sys_func = () -> classical_pair(; J=-1.0, rng, α) 
+    sys_func = () -> classical_pair(; J=-1.0, rng, λ) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_fm_cl, sems_fm_cl = μs, sems
 
     println("\nCollecting statistics to pair of SU(4) entangled pair (J=-1)")
-    sys_func = () -> entangled_pair(; J=-1.0, rng, α) 
+    sys_func = () -> entangled_pair(; J=-1.0, rng, λ) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_fm_en, sems_fm_en = μs, sems
 
     println("\nCollecting statistics for single SU(2) coherent spins (J=1)") 
-    sys_func = () -> classical_pair(; J=1.0, rng) 
+    sys_func = () -> classical_pair(; J=1.0, rng, λ) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_afm_cl, sems_afm_cl = μs, sems
 
     println("\nCollecting statistics for single SU(4) engtangled pair (J=1)") 
-    sys_func = () -> entangled_pair(; J=1.0, rng, α) 
+    sys_func = () -> entangled_pair(; J=1.0, rng, λ) 
     (; μs, sems) = generate_statistics(Δt, num_samples, kTs; sys_func, dur_burnin, dur_trajectory)
     μs_afm_en, sems_afm_en = μs, sems
 
@@ -46,6 +46,8 @@ function fig2()
 
 
     #= Plot results =#
+    dipole_color = :blue
+    su4_color = :black
     params = (;
         xlabelfontsize = 16,
         ylabelfontsize = 14,
@@ -56,30 +58,36 @@ function fig2()
     )
     error_bars = (;
         markersize=10.0,
-        markerstrokewidth=1.5,
-        markeralpha=0.7,
+        markerstrokewidth=1.0,
+        markeralpha=0.6,
         linewidth = 0.0,
         label=false,
-        markerstrokecolor=:blue3,
     )
     line_cl = (;
-        label = "Classical (dipoles only)",
-        linewidth = 1.25,
+        label = false, 
+        linewidth = 1.5,
         linestyle = :dot,
-        linealpha=0.6,
-        color = :black,
+        linealpha=0.9,
+        color = dipole_color,
+    )
+    line_cl_label = (;
+        label = "Classical (dipoles only)",
+        linewidth = 1.5,
+        linestyle = :dot,
+        linealpha=1.0,
+        color = dipole_color,
     )
     line_en = (;
         label = "Classical (SU(4) spin)",
         linestyle = :dash,
-        linewidth = 1.25,
-        linealpha=0.6,
-        color = :black,
+        linewidth = 1.0,
+        linealpha=0.9,
+        color = su4_color,
     )
     line_qu = (;
         label = "Quantum",
-        linewidth=2.00,
-        linealpha=0.8,
+        linewidth=1.00,
+        linealpha=1.0,
         color = :red,
     )
     yticks_fm  = 0.0:-0.05:-0.25
@@ -94,11 +102,12 @@ function fig2()
         legend=false,
         params...
     )
+    plot!([0., 1], [100., 100]; line_cl_label...) # Just so legend has no transparency
     plot!(kTs_ref, E_fm_cl; ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_fm_en; line_en...)
     plot!(kTs_ref, E_fm_qu; line_qu...)
-    plot!(kTs, μs_fm_cl; yerr=sems_fm_cl, markerstrokecolor=10, error_bars...)
-    plot!(kTs, μs_fm_en; yerr=sems_fm_en, markerstrokecolor=3, error_bars...)
+    plot!(kTs, μs_fm_cl; yerr=sems_fm_cl, markerstrokecolor=dipole_color, error_bars...)
+    plot!(kTs, μs_fm_en; yerr=sems_fm_en, markerstrokecolor=su4_color, error_bars...)
 
     # AFM (J > 0)
     p2 = plot(;
@@ -108,11 +117,12 @@ function fig2()
         legend=:bottomright,
         params...
     )
+    plot!([0., 1], [100., 100]; line_cl_label...) # Just so legend has no transparency
     plot!(kTs_ref, E_afm_cl; xlabel = L"k_bT", ylabel = L"$\left\langle E \right\rangle$", line_cl...)
     plot!(kTs_ref, E_afm_en; line_en...)
     plot!(kTs_ref, E_afm_qu; line_qu...)
-    plot!(kTs, μs_afm_cl; yerr=sems_afm_cl, markerstrokecolor=10, error_bars...)
-    plot!(kTs, μs_afm_en; yerr=sems_afm_en, markerstrokecolor=3, error_bars...)
+    plot!(kTs, μs_afm_cl; yerr=sems_afm_cl, markerstrokecolor=dipole_color, error_bars...)
+    plot!(kTs, μs_afm_en; yerr=sems_afm_en, markerstrokecolor=su4_color, error_bars...)
 
     layout = @layout [a; b]
     p = plot(p1, p2;
