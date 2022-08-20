@@ -90,10 +90,6 @@ struct System{N, N2}
             for i = 1:L
                 @assert norm(Λ[i] - Λ'[i]) < 1e-12
             end
-            # Remove trace
-            # for i = 1:L
-            #     Λ[i] -= I*tr(Λ[i])/N
-            # end
         end
 
         Z₀ = SVector{N,ComplexF64}((i==1 ? 1 : 0) for i=1:N)
@@ -234,28 +230,23 @@ end
 
 
 
-## Code to generate figures and animation
+## Code to generate figures and animation 
 
 using Plots
 using ColorSchemes
 using LaTeXStrings
-# using Interpolations
 import Measures: mm
 import Statistics: mean, std
 import SpecialFunctions: erf
 
-pyplot()
+# pyplot() # Install PyPlot and uncomment for publication figures
 
-# include(joinpath("src", "figures_1_and_2", "models_and_utils.jl"))
-include("src/figures_1_and_2/models_and_utils.jl")
-# include(joinpath("src", "figures_1_and_2", "fig1.jl"))
-include("src/figures_1_and_2/fig1.jl")
-# include(joinpath("src", "figures_1_and_2", "fig2.jl"))
-include("src/figures_1_and_2/fig2.jl")
+include(joinpath("figures_1_and_2", "models_and_utils.jl"))
+include(joinpath("figures_1_and_2", "fig1.jl"))
+include(joinpath("figures_1_and_2", "fig2.jl"))
 export fig1, fig2
 
 include(joinpath("skyrmions", "LangevinSkyrmions.jl"))
-# include("../skyrmions/LangevinSkyrmions.jl")
 fig3 = LangevinSkyrmions.fig3
 quench_animation = LangevinSkyrmions.quench_animation
 export fig3, quench_animation
