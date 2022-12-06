@@ -1,4 +1,4 @@
-# SchrodingerLangevin.jl: Figures and Animations
+# SchrodingerLangevin.jl
 
 This package contains all the necessary code to reproduce the figures and animations from the paper ["Langevin dynamics of generalized spins as SU(N) coherent states"](https://arxiv.org/abs/2209.01265) by D. Dahlbom, C. Miles, H. Zhang, C. Batista and K. Barros. The code is written in the [Julia](https://julialang.org/) programming language. Some of the examples, in particular those involving skyrmions, additionally require the package [Sunny.jl](https://github.com/SunnySuite/Sunny.jl), which implements many of the ideas in the paper and makes them available for use in a general purpose package for simulating spin systems. In this file we briefly describe how to install and use the code in the Julia REPL. Similar steps can be taken within an environment like VSCode.
 
