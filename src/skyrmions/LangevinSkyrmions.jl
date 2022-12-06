@@ -67,7 +67,7 @@ end
 # Functions to generate figures and animations 
 ################################################################################
 
-using GLMakie, Observables, ColorSchemes, ColorTypes
+using GLMakie, Observables, ColorSchemes, ColorTypes, JLD2
 
 export fig3, quench_animation, thermalize_animation
 

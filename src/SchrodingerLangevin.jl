@@ -235,7 +235,6 @@ end
 using Plots
 using ColorSchemes
 using LaTeXStrings
-using JLD2
 import Measures: mm
 import Statistics: mean, std
 import SpecialFunctions: erf
