@@ -52,9 +52,8 @@ function su3_skyrmion_model(dims;
     field = external_field([0.0 0.0 h])
 
     # Anisotropy
-    S = Sunny.gen_spin_ops(N)
-    Λ = D * (S[3]^2)
-    aniso = SUN_anisotropy(Λ, 1)
+    Λ = D * 𝒮[3]^2
+    aniso = anisotropy(Λ, 1)
 
     # Spin system
     interactions = [ex1, ex2, field, aniso]
@@ -70,11 +69,11 @@ end
 
 using GLMakie, Observables, ColorSchemes, ColorTypes
 
-export fig3, quench_animation
+export fig3, quench_animation, thermalize_animation
 
 include("plot_utils.jl")
 include("fig3.jl")
-include("quench_animation.jl")
+include("animations.jl")
 
 
 end

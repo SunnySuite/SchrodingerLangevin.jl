@@ -235,6 +235,7 @@ end
 using Plots
 using ColorSchemes
 using LaTeXStrings
+using JLD2
 import Measures: mm
 import Statistics: mean, std
 import SpecialFunctions: erf
@@ -249,7 +250,8 @@ export fig1, fig2
 include(joinpath("skyrmions", "LangevinSkyrmions.jl"))
 fig3 = LangevinSkyrmions.fig3
 quench_animation = LangevinSkyrmions.quench_animation
-export fig3, quench_animation
+thermalize_animation = LangevinSkyrmions.thermalize_animation
+export fig3, quench_animation, thermalize_animation
 
 
 end # module

@@ -198,7 +198,7 @@ function animate_chirality(Zs, sys;
     end
 
     # Set up figure
-    fig = Figure()
+    fig = Figure(; resolution=(600,400))
     ax = Axis(fig[1,1]; aspect)
     hidespines!(ax); hidedecorations!(ax)
     poly!(ax, pgons; color=colors)
