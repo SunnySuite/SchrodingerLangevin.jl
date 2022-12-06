@@ -9,14 +9,14 @@ using LinearAlgebra, Random
 ################################################################################
 """
     su3_skyrmion_model(dims;
-    J_ref=1.0, h = 15.5, D = 19.0, lat_type = 1, rng = nothing,
+    J_ref=1.0, h = 15.5, D = 19.0, rng = nothing,
 )
 
 Creates a Sunny implementation of the skyrmion-supporting spin-1 model described in
 Zhang et al. (2022). 
 """
 function su3_skyrmion_model(dims;
-    J_ref=1.0, h = 15.5, D = 19.0, lat_type = 1, rng = nothing,
+    J_ref=1.0, h = 15.5, D = 19.0, rng = nothing,
 )
     isnothing(rng) && (rng = MersenneTwister())
     h *= 8.637992737026183 # × (1/2*μᵦ) to make unitless
